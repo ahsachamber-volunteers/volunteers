@@ -355,6 +355,7 @@ textarea.input{min-height:80px;resize:vertical}
 .stamp-ok .big .icon{width:64px;height:64px;stroke-width:3}
 .brand-mark img,.logo-img{width:100%;height:100%;object-fit:contain;border-radius:inherit;display:block}
 .brand-mark.has-logo{background:#fff;padding:3px}
+.on-accent{background:var(--accent)!important}
 .logo-sm{width:36px;height:36px;border-radius:10px;background:#fff;padding:3px;flex:none;display:inline-block;vertical-align:middle}
 .hero-logo{width:96px;height:96px;border-radius:22px;background:#fff;padding:8px;box-shadow:var(--shadow)}
 .wall-logo{width:64px;height:64px;border-radius:16px;background:#fff;padding:6px}
@@ -1208,10 +1209,14 @@ function applyBrand(){
   } else { ['--accent','--accent-soft','--accent-ink'].forEach(k=>root.style.removeProperty(k)); }
   let fav=document.querySelector('link[rel=icon]'); if(b.logo){ if(!fav){ fav=document.createElement('link'); fav.rel='icon'; document.head.appendChild(fav); } fav.href=b.logo; }
 }
-const brandMark = () => logoUrl() ? `<span class="brand-mark has-logo"><img src="${logoUrl()}" alt="الشعار"></span>` : `<span class="brand-mark">${ic('crowd')}</span>`;
-const logoSm = () => logoUrl() ? `<img class="logo-sm" src="${logoUrl()}" alt="">` : '';
+const LA = () => brandCfg().logoLight ? ' on-accent' : '';
+const brandMark = () => logoUrl() ? `<span class="brand-mark has-logo${LA()}"><img src="${logoUrl()}" alt="الشعار"></span>` : `<span class="brand-mark">${ic('crowd')}</span>`;
+const logoSm = () => logoUrl() ? `<img class="logo-sm${LA()}" src="${logoUrl()}" alt="">` : '';
 function readLogo(file){
-  return new Promise((res,rej)=>{ const fr=new FileReader(); fr.onerror=rej; fr.onload=()=>{ const im=new Image(); im.onerror=rej; im.onload=()=>{ const max=240; const k=Math.min(1,max/Math.max(im.width,im.height)); const cv=document.createElement('canvas'); cv.width=Math.round(im.width*k); cv.height=Math.round(im.height*k); cv.getContext('2d').drawImage(im,0,0,cv.width,cv.height); let url=cv.toDataURL('image/png'); if(url.length>180000) url=cv.toDataURL('image/jpeg',0.85); res(url); }; im.src=fr.result; }; fr.readAsDataURL(file); });
+  return new Promise((res,rej)=>{ const fr=new FileReader(); fr.onerror=rej; fr.onload=()=>{ const im=new Image(); im.onerror=rej; im.onload=()=>{ const max=240; const k=Math.min(1,max/Math.max(im.width,im.height)); const cv=document.createElement('canvas'); cv.width=Math.round(im.width*k); cv.height=Math.round(im.height*k); const cx=cv.getContext('2d'); cx.drawImage(im,0,0,cv.width,cv.height);
+    let sum=0,n=0; try{ const d=cx.getImageData(0,0,cv.width,cv.height).data; for(let i=0;i<d.length;i+=16){ if(d[i+3]>128){ sum+=(d[i]*0.3+d[i+1]*0.59+d[i+2]*0.11); n++; } } }catch{}
+    const light = n>0 && sum/n>215 && n < (cv.width*cv.height/4)*0.85;
+    let url=cv.toDataURL('image/png'); if(url.length>180000 && !light) url=cv.toDataURL('image/jpeg',0.85); res({url, light}); }; im.src=fr.result; }; fr.readAsDataURL(file); });
 }
 const setBrand = patch => { const c=cfg(); put('config','main',{...c, brand:{...(c.brand||{}), ...patch}}); };
 
@@ -1367,7 +1372,7 @@ function landingView(){
   const c=cfg();
   return `<div class="center"><div class="landing">
     <div class="hero">
-      ${logoUrl()?`<img class="hero-logo" src="${logoUrl()}" alt="شعار ${esc(c.eventName||'')}">`:''}
+      ${logoUrl()?`<img class="hero-logo${LA()}" src="${logoUrl()}" alt="شعار ${esc(c.eventName||'')}">`:''}
       <span class="pill accent nodot" style="justify-self:start">${c.eventDate ? esc(fmtDay(new Date(c.eventDate).getTime())) : 'منصة إدارة المتطوعين'}</span>
       <h1>${esc(c.eventName||'منصة إدارة المتطوعين')}</h1>
       <p class="muted">${S.config?'اختر طريقة الدخول':'الفعالية لم تُجهز بعد. ادخل كمشرف لإعدادها.'}</p>
@@ -2182,7 +2187,7 @@ function wallView(){
   const logs=Object.values(S.logs).filter(l=>l.type!=='energy').sort((a,b)=>b.at-a.at).slice(0,7);
   const {late}=shiftInfo(); const em=cfg().emergency;
   return `<div class="wall">
-    <div class="wall-top"><div class="row" style="gap:14px;flex-wrap:nowrap">${logoUrl()?`<img class="wall-logo" src="${logoUrl()}" alt="">`:''}<div><h1>${esc(cfg().eventName)}</h1><div class="small muted"><span class="live">مباشر</span> · غرفة العمليات</div></div></div>
+    <div class="wall-top"><div class="row" style="gap:14px;flex-wrap:nowrap">${logoUrl()?`<img class="wall-logo${LA()}" src="${logoUrl()}" alt="">`:''}<div><h1>${esc(cfg().eventName)}</h1><div class="small muted"><span class="live">مباشر</span> · غرفة العمليات</div></div></div>
       <div class="row"><span class="wall-clock" data-clock>${new Date().toLocaleTimeString('ar-u-nu-latn',{hour:'2-digit',minute:'2-digit',second:'2-digit'})}</span><button class="btn sm" data-act="tab" data-tab="dash">خروج</button></div></div>
     ${goldBanner()}
     ${tickerHtml()}
@@ -2229,7 +2234,7 @@ async function certImage(vid){
   x.strokeStyle='#c99a06'; x.lineWidth=3; x.strokeRect(62,62,W-124,H-124);
   [[62,62],[W-62,62],[62,H-62],[W-62,H-62]].forEach(([a,b])=>{ x.fillStyle='#c99a06'; x.beginPath(); x.arc(a,b,12,0,Math.PI*2); x.fill(); });
   x.direction='rtl'; x.textAlign='center'; x.textBaseline='middle';
-  if(logoUrl()){ try{ const im=await new Promise((r,j)=>{ const i=new Image(); i.onload=()=>r(i); i.onerror=j; i.src=logoUrl(); }); const lh=90, lw=im.width*lh/im.height; x.drawImage(im, W/2-lw/2, 85, lw, lh); }catch{} }
+  if(logoUrl()){ try{ const im=await new Promise((r,j)=>{ const i=new Image(); i.onload=()=>r(i); i.onerror=j; i.src=logoUrl(); }); const lh=90, lw=im.width*lh/im.height; if(brandCfg().logoLight){ x.fillStyle=BC; x.beginPath(); if(x.roundRect) x.roundRect(W/2-lw/2-14,71,lw+28,lh+28,18); else x.rect(W/2-lw/2-14,71,lw+28,lh+28); x.fill(); } x.drawImage(im, W/2-lw/2, 85, lw, lh); }catch{} }
   x.fillStyle=BC; x.font=`600 30px ${B}`; x.fillText(c.eventName||'', W/2, logoUrl()?200:140);
   x.fillStyle='#122129'; x.font=`700 76px ${D}`; x.fillText('شهادة شكر وتقدير', W/2, 230);
   x.fillStyle='#c99a06'; x.fillRect(W/2-90, 285, 180, 5);
@@ -2587,7 +2592,7 @@ document.addEventListener('input', e=>{ const el=e.target; if(el.dataset.input==
 document.addEventListener('change', e=>{
   const el=e.target;
   if(el.dataset.change==='fZone'){ UI.fZone=el.value; scheduleRender(); }
-  if('logoFile' in el.dataset && el.files && el.files[0]){ const f=el.files[0]; readLogo(f).then(url=>{ setBrand({logo:url}); toast('تم رفع الشعار','ok'); }).catch(()=>toast('تعذر قراءة الصورة، جرّب صورة PNG أو JPG','warn')); }
+  if('logoFile' in el.dataset && el.files && el.files[0]){ const f=el.files[0]; readLogo(f).then(r=>{ setBrand({logo:r.url, logoLight:r.light}); toast(r.light?'تم رفع الشعار الأبيض، وبيظهر على خلفية بلون المنصة':'تم رفع الشعار','ok'); }).catch(()=>toast('تعذر قراءة الصورة، جرّب صورة PNG أو JPG','warn')); }
   if('brandCustom' in el.dataset){ setBrand({color:el.value}); toast('تم تغيير اللون','ok'); }
   if(el.dataset.change==='payDay'){ UI.payDay=el.value; scheduleRender(); }
   if(el.dataset.pay){ const k=el.dataset.pay; const c=cfg(); put('config','main',{...c, allowance:{...(c.allowance||{}), [k]:Math.max(0,+el.value||0)}}); toast('تم الحفظ','ok'); }
