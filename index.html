@@ -442,7 +442,8 @@ const FIREBASE_CONFIG = {
   messagingSenderId: "567473689160",
   appId: "1:567473689160:web:302bec0e9188889803fe7d"
 };
-const ADMIN_EMAILS = ["sara.alotaibi232@gmail.com", "daq.007@hotmail.com"];
+/* صلاحية المشرف تُحدَّد من قواعد الحماية في Firebase، فلا تظهر أي إيميلات هنا */
+async function probeAdmin(){ try{ await DB.collection('secrets').limit(1).get(); return true; }catch(e){ return false; } }
 const FB_ON = !!(window.firebase && FIREBASE_CONFIG.apiKey && !FIREBASE_CONFIG.apiKey.startsWith('PASTE'));
 /* ================================================= */
 
@@ -1206,7 +1207,11 @@ function applyBrand(){
     root.style.setProperty('--accent', accent);
     root.style.setProperty('--accent-soft', `color-mix(in srgb, ${c} ${dark?28:14}%, ${dark?'#142126':'#ffffff'})`);
     root.style.setProperty('--accent-ink', dark ? '#06141a' : (hexLum(c)>0.45?'#111111':'#ffffff'));
-  } else { ['--accent','--accent-soft','--accent-ink'].forEach(k=>root.style.removeProperty(k)); }
+    const T = dark
+      ? {'--bg':`color-mix(in srgb, ${c} 16%, #0a0c0d)`, '--surface':`color-mix(in srgb, ${c} 20%, #121516)`, '--surface-2':`color-mix(in srgb, ${c} 26%, #171b1c)`, '--line':`color-mix(in srgb, ${c} 34%, #2a3133)`, '--muted':`color-mix(in srgb, ${c} 20%, #a3adb0)`}
+      : {'--bg':`color-mix(in srgb, ${c} 7%, #f3f5f5)`, '--surface':'#ffffff', '--surface-2':`color-mix(in srgb, ${c} 5%, #f6f8f8)`, '--line':`color-mix(in srgb, ${c} 14%, #dde3e5)`, '--muted':`color-mix(in srgb, ${c} 18%, #5a6a73)`};
+    Object.entries(T).forEach(([k,v])=>root.style.setProperty(k,v));
+  } else { ['--accent','--accent-soft','--accent-ink','--bg','--surface','--surface-2','--line','--muted'].forEach(k=>root.style.removeProperty(k)); }
   let fav=document.querySelector('link[rel=icon]'); if(b.logo){ if(!fav){ fav=document.createElement('link'); fav.rel='icon'; document.head.appendChild(fav); } fav.href=b.logo; }
 }
 const LA = () => brandCfg().logoLight ? ' on-accent' : '';
@@ -2532,7 +2537,7 @@ const FORMS = {
     if(FB_ON){ const fd=new FormData(f); const email=(AUTH.admin ? AUTH.user.email : fd.get('email')||'').trim(); const btn=f.querySelector('button'); if(btn) btn.disabled=true;
       try{
         if(AUTH.admin){ await AUTH.user.reauthenticateWithCredential(firebase.auth.EmailAuthProvider.credential(email, pin)); }
-        else { if(!ADMIN_EMAILS.map(x=>x.toLowerCase()).includes(email.toLowerCase())){ if(btn) btn.disabled=false; return toast('هذا الإيميل ليس من المشرفين','crit'); } await firebase.auth().signInWithEmailAndPassword(email, pin); }
+        else { await firebase.auth().signInWithEmailAndPassword(email, pin); if(!(await probeAdmin())){ await firebase.auth().signOut(); if(btn) btn.disabled=false; return toast('هذا الحساب ليس من المشرفين','crit'); } }
         const after=MODAL_AFTER; closeModal(); if(after) after(); else setSes({role:'admin'});
       }catch(e){ if(btn) btn.disabled=false; toast('الإيميل أو كلمة المرور غير صحيحة','crit'); }
       return; } if(hash(cfg().salt+':admin:'+pin)===cfg().adminPinHash){ const after=MODAL_AFTER; closeModal(); if(after) after(); else setSes({role:'admin'}); } else { toast('رمز المشرف غير صحيح','crit'); f.reset(); } },
@@ -2608,6 +2613,7 @@ $('#glory').addEventListener('click', ()=>{ $('#glory').classList.remove('open')
 $('#scrim').addEventListener('click', ()=>{ if($('#modal').classList.contains('open')) closeModal(); else closeDrawer(); });
 document.addEventListener('keydown', e=>{ if(e.key==='Escape'){ if($('#modal').classList.contains('open')) closeModal(); else if(UI.drawer) closeDrawer(); } });
 window.addEventListener('hashchange', ()=>scheduleRender());
+try{ matchMedia('(prefers-color-scheme: dark)').addEventListener('change', ()=>{ BRAND_SIG=''; scheduleRender(); }); }catch{}
 setInterval(()=>{
   $$('[data-countdown]').forEach(el=>{ el.textContent=fmtClock(+el.dataset.countdown-now()); });
   $$('[data-clock]').forEach(el=>{ el.textContent=new Date().toLocaleTimeString('ar-u-nu-latn',{hour:'2-digit',minute:'2-digit',second:'2-digit'}); });
@@ -2684,7 +2690,7 @@ async function boot(){
   firebase.auth().onAuthStateChanged(async user=>{
     stopListeners(); S.ready=false;
     AUTH.user=user; AUTH.volCode=null;
-    AUTH.admin=!!(user && user.email && ADMIN_EMAILS.map(e=>e.toLowerCase()).includes(user.email.toLowerCase()));
+    AUTH.admin = !!(user && user.email) && await probeAdmin();
     if(!user){ try{ await firebase.auth().signInAnonymously(); }catch(e){ S.ready=true; S.slow=true; scheduleRender(); } return; }
     if(AUTH.admin){ startListeners('admin'); scheduleRender(); return; }
     if(user.email){ await firebase.auth().signOut(); return; }
