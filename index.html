@@ -2252,7 +2252,7 @@ function peopleView(){
   list.sort((a,b)=>a.name.localeCompare(b.name,'ar'));
   const counts={all:vols().length}; Object.keys(STATUS).forEach(s=>counts[s]=vols().filter(v=>v.status===s).length);
   return `<div class="section-title"><h2>المتطوعون <span class="muted num small">(${list.length})</span></h2>
-    <div class="row"><button class="btn sm" data-act="fix-phones">📞 تصحيح الجوالات</button><button class="btn sm" data-act="reset-missing">🔑 رموز جديدة لمن لم يدخل</button><button class="btn sm" data-act="creds-file">📲 إرسال بيانات الدخول</button><button class="btn sm" data-act="print-open">${ic('idcard')} طباعة البطاقات</button><button class="btn sm" data-act="import">استيراد قائمة</button><button class="btn sm primary" data-act="add-vol">${ic('plus')} إضافة متطوع</button></div></div>
+    <div class="row"><button class="btn sm" data-act="fix-phones">📞 تصحيح الجوالات</button><button class="btn sm" data-act="reset-missing">🔑 رموز للي ما وصلتهم رسالة</button><button class="btn sm" data-act="creds-file">📲 إرسال بيانات الدخول</button><button class="btn sm" data-act="print-open">${ic('idcard')} طباعة البطاقات</button><button class="btn sm" data-act="import">استيراد قائمة</button><button class="btn sm primary" data-act="add-vol">${ic('plus')} إضافة متطوع</button></div></div>
   <div class="card card-b stack" style="gap:10px">
     <input class="input" id="people-q" data-input="q" placeholder="ابحث بالاسم أو الرقم أو الجوال أو الدور" value="${esc(UI.q)}">
     <div class="row">
@@ -2267,7 +2267,7 @@ function personRow(v){
   const since = v.status==='break' ? fmtDur(now()-v.breakAt) : v.status==='active' ? 'منذ '+fmtTime(v.checkInAt) : v.status==='out' ? fmtTime(v.outAt) : '';
   const next = {idle:['active','حضور','ok'], active:['break','استراحة','warn'], break:['active','عودة','ok'], out:['active','حضور','']}[v.status];
   return `<div class="li click people-row" data-act="open-vol" data-id="${v.id}">
-    <div class="row" style="flex-wrap:nowrap;min-width:0">${avatar(v.id)}<div style="min-width:0"><div class="t">${esc(v.name)} ${heart(v.id)}${S.profiles[v.id]?'':'<span class="pill idle nodot tiny" title="ما عبّى نموذج البيانات">بدون بيانات</span>'}</div><div class="s"><span class="num">#${esc(v.code)}</span><span>${esc(v.role||'')}</span></div></div></div>
+    <div class="row" style="flex-wrap:nowrap;min-width:0">${avatar(v.id)}<div style="min-width:0"><div class="t">${esc(v.name)} ${heart(v.id)}${S.profiles[v.id]?'':`<span class="pill idle nodot tiny" title="ما عبّى نموذج البيانات">بدون بيانات</span>${v.credSent?' <span class="pill ok nodot tiny">رسالته وصلت ✓</span>':' <span class="pill warn nodot tiny">ما انرسل له</span>'}`}</div><div class="s"><span class="num">#${esc(v.code)}</span><span>${esc(v.role||'')}</span></div></div></div>
     <div class="hide-m small"><span class="zdot" style="--zc:${zColor(v.zone)};display:inline-block;margin-inline-end:6px"></span>${esc(zName(v.zone))}</div>
     <div class="hide-m"><span class="pill ${isOverdue(v)?'crit':S0.c}">${S0.t}</span> <span class="tiny muted num">${since}</span></div>
     <div class="hide-m num small">${fmtDur(workedMs(v.id))}</div>
@@ -3198,8 +3198,8 @@ const ACT = {
     const groups={}; vols().forEach(v=>{ (groups[String(v.code)] ||= []).push(v); });
     const dupe=Object.values(groups).filter(g=>g.length>1);
     const fixIds=new Set(dupe.flat().map(v=>v.id));
-    const list0=vols().filter(v=>!S.profiles[v.id] || fixIds.has(v.id)).sort((a,b)=>a.name.localeCompare(b.name,'ar'));
-    if(!list0.length) return toast('كل المتطوعين دخلوا وعبّوا بياناتهم 👏','ok');
+    const list0=vols().filter(v=>(!S.profiles[v.id] && !v.credSent) || fixIds.has(v.id)).sort((a,b)=>a.name.localeCompare(b.name,'ar'));
+    if(!list0.length) return toast('كل المتطوعين إما دخلوا أو وصلتهم رسالتهم ✓','ok');
     if(!await askConfirm('رموز جديدة',`${dupe.length?`لقيت ${dupe.length} رقم مكرر وبيتصلح (كل واحد ياخذ رقم خاص فيه). `:''}بيتم إنشاء رمز جديد لـ ${list0.length} متطوع، والرموز القديمة تتوقف. بعدها ترسلين لهم الرسائل الجديدة.`,'إنشاء الرموز')) return;
     for(const g of dupe){ const code=String(g[0].code); g.sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
       if(DB){ try{ const ss=await DB.collection('sessions').where('code','==',code).get(); for(const d of ss.docs) await d.ref.delete().catch(()=>{}); }catch{} }
