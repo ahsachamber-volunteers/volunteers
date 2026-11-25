@@ -2252,7 +2252,7 @@ function peopleView(){
   list.sort((a,b)=>a.name.localeCompare(b.name,'ar'));
   const counts={all:vols().length}; Object.keys(STATUS).forEach(s=>counts[s]=vols().filter(v=>v.status===s).length);
   return `<div class="section-title"><h2>المتطوعون <span class="muted num small">(${list.length})</span></h2>
-    <div class="row"><button class="btn sm" data-act="creds-file">📲 إرسال بيانات الدخول</button><button class="btn sm" data-act="print-open">${ic('idcard')} طباعة البطاقات</button><button class="btn sm" data-act="import">استيراد قائمة</button><button class="btn sm primary" data-act="add-vol">${ic('plus')} إضافة متطوع</button></div></div>
+    <div class="row"><button class="btn sm" data-act="reset-missing">🔑 رموز جديدة لمن لم يدخل</button><button class="btn sm" data-act="creds-file">📲 إرسال بيانات الدخول</button><button class="btn sm" data-act="print-open">${ic('idcard')} طباعة البطاقات</button><button class="btn sm" data-act="import">استيراد قائمة</button><button class="btn sm primary" data-act="add-vol">${ic('plus')} إضافة متطوع</button></div></div>
   <div class="card card-b stack" style="gap:10px">
     <input class="input" id="people-q" data-input="q" placeholder="ابحث بالاسم أو الرقم أو الجوال أو الدور" value="${esc(UI.q)}">
     <div class="row">
@@ -3191,6 +3191,11 @@ const ACT = {
   'meal-use': ()=>mealStampModal(),
   'pay-toggle': el=>{ const c=cfg(); put('config','main',{...c, allowance:{amount:20, minHours:6, ...(c.allowance||{}), enabled:el.checked}}); },
   'payinfo-edit': ()=>payInfoModal(),
+  'reset-missing': async ()=>{ const list0=vols().filter(v=>!S.profiles[v.id]).sort((a,b)=>a.name.localeCompare(b.name,'ar'));
+    if(!list0.length) return toast('كل المتطوعين دخلوا وعبّوا بياناتهم 👏','ok');
+    if(!await askConfirm('رموز جديدة',`بيتم إنشاء رمز جديد لـ ${list0.length} متطوع ما دخلوا للحين، والرموز القديمة تتوقف. بعدها ترسلين لهم الرسائل الجديدة.`,'إنشاء الرموز')) return;
+    const out=[]; for(const v of list0){ const pin=randPin(); put('secrets', String(v.code), {...(secretOf(v)||{vid:v.id, phone:v.phone||''}), vid:v.id, pinHash:pinHash(pin,v.code)}); put('volunteers', v.id, (({credSent,...r})=>r)(S.volunteers[v.id])); out.push({id:v.id, name:v.name, phone:v.phone||secretOf(v)?.phone||'', code:v.code, pin}); if(DB) await sleep(40); }
+    credsModal(out); },
   'creds-file': ()=>openModal(`<div class="modal-h"><h2>📲 إرسال بيانات الدخول</h2><button class="btn ghost sm" data-act="close-modal" aria-label="إغلاق">${ic('x')}</button></div><div class="modal-b stack"><p class="small muted" style="margin:0">اختاري ملف بيانات الدخول اللي نزلتيه بعد الاستيراد، وترجع لك قائمة الإرسال مع علامات ✓ اللي أرسلتيها قبل.</p><label class="btn primary">اختيار الملف<input type="file" accept=".csv,text/csv" data-creds-file hidden></label></div>`),
   'wa-mode': el=>{ lsSet('waMode', el.dataset.m); credsModal(CREDS_LAST); },
   'cred-sent': el=>{ el.classList.remove('ok'); el.classList.add('ghost'); el.textContent='✓ تم الإرسال'; const id=el.dataset.id; const v=S.volunteers[id]; if(v && !v.credSent) put('volunteers', id, {...v, credSent:now()}); setTimeout(()=>{ const n=$('#cred-sent-n'); if(n) n.textContent=CREDS_LAST.filter(x=>S.volunteers[x.id]?.credSent).length; },200); return true; },
