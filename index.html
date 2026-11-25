@@ -688,6 +688,16 @@ body:has(.wall.nb) #wall-fx .glow{display:none}
 .sf-ph i{font-style:normal;font-size:.6rem;color:var(--muted);padding:2px;text-align:center}
 .sf-drawer{display:flex;gap:12px;align-items:center;border:1px solid var(--line);border-radius:12px;padding:10px}
 .sf-drawer img{width:90px;height:90px;border-radius:50%;object-fit:cover}
+
+body.printing #print-root{display:block}
+@media screen{ body.printing>*:not(#print-root):not(#print-bar){display:none!important} body.printing{background:#f4f1ec}
+  body.printing #print-root{padding:70px 10px 20px} body.printing #print-root .pp{display:grid;grid-template-columns:repeat(auto-fill,minmax(204px,1fr));gap:14px;justify-items:center;margin-bottom:14px}
+  body.printing #print-root .idc{font-size:9.6px}
+  #print-bar{display:none} body.printing #print-bar{display:flex;position:fixed;top:0;left:0;right:0;z-index:50;gap:10px;justify-content:center;align-items:center;padding:12px;background:#24130f;color:#fff;font-family:var(--font-body)} }
+@media print{ #print-bar{display:none!important} }
+
+/* الصور الشخصية: نعرض الوجه (أعلى الصورة) بدل القص من النص */
+.av.ph img,.idc-ph img,#ph-prev img,.sf-ph img{object-position:50% 22%}
 </style>
 </head>
 <body>
@@ -1192,10 +1202,13 @@ function printCards(onlyPhoto){
   let list=vols().slice().sort((a,b)=>a.name.localeCompare(b.name,'ar')); if(onlyPhoto) list=list.filter(v=>profOf(v.id)?.photo);
   if(!list.length) return toast('ما فيه بطاقات للطباعة','warn');
   let root=$('#print-root'); if(!root){ root=document.createElement('div'); root.id='print-root'; document.body.appendChild(root); }
+  if(!$('#print-bar')){ const bar=document.createElement('div'); bar.id='print-bar'; bar.innerHTML='<button class="btn primary" onclick="window.print()">🖨️ طباعة / حفظ PDF</button><button class="btn" style="background:#fff;color:#24130f;border-color:#fff" onclick="document.body.classList.remove(\'printing\')">رجوع</button>'; document.body.appendChild(bar); }
   const pages=[]; for(let i=0;i<list.length;i+=9) pages.push(list.slice(i,i+9));
   root.innerHTML=pages.map(pg=>`<div class="pp">${pg.map(v=>idCard(v.id)).join('')}</div>`).join('');
   document.body.classList.add('printing'); closeModal();
-  setTimeout(()=>{ window.print(); setTimeout(()=>document.body.classList.remove('printing'), 800); }, 350);
+  const done=()=>{ document.body.classList.remove('printing'); window.removeEventListener('afterprint', done); };
+  window.addEventListener('afterprint', done);
+  try{ window.print(); }catch{}
 }
 function printModal(){
   const n=vols().length, np=vols().filter(v=>profOf(v.id)?.photo).length;
@@ -1428,8 +1441,8 @@ function profileForm(vid, editing){
 async function shrinkPhoto(file){
   const url=URL.createObjectURL(file);
   try{ const im=await new Promise((r,j)=>{ const i=new Image(); i.onload=()=>r(i); i.onerror=j; i.src=url; });
-    const S0=360; const cv=document.createElement('canvas'); cv.width=S0; cv.height=S0; const x=cv.getContext('2d');
-    const m=Math.min(im.width,im.height); x.drawImage(im,(im.width-m)/2,(im.height-m)/2,m,m,0,0,S0,S0);
+    const MAX=420; const k=Math.min(1, MAX/Math.max(im.width,im.height)); const W=Math.round(im.width*k), H=Math.round(im.height*k);
+    const cv=document.createElement('canvas'); cv.width=W; cv.height=H; const x=cv.getContext('2d'); x.drawImage(im,0,0,W,H);
     let q=.82, out=cv.toDataURL('image/jpeg',q); while(out.length>60000 && q>.4){ q-=.1; out=cv.toDataURL('image/jpeg',q); } return out;
   } finally { URL.revokeObjectURL(url); }
 }
