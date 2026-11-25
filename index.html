@@ -3285,7 +3285,15 @@ const ACT = {
     setStatus(vid,s,'self'); toast(STATUS[s].t,'ok'); },
   'v-alert': el=>{ const t=el.dataset.t; const T=ALERT_T[t]; openModal(`<div class="modal-h"><h2>${T.t}</h2><button class="btn ghost sm" data-act="close-modal">${ic('x')}</button></div><form data-form="v-alert" data-t="${t}"><div class="modal-b"><label class="small muted" for="va-text">تفاصيل (اختياري)</label><textarea class="input" id="va-text" name="text" placeholder="${t==='crowd'?'مثال: تكدس عند المدخل الشرقي':t==='medical'?'مثال: زائر مغمى عليه عند البوابة 3':'مثال: نحتاج شخصين إضافيين للتنظيم'}"></textarea>${micBtn('#va-text')}</div><div class="modal-f"><button class="btn ${T.c==='crit'?'crit':'primary'}">إرسال البلاغ</button><button type="button" class="btn" data-act="close-modal">إلغاء</button></div></form>`); },
 };
-async function bulkDelete(cols){ for(const c of cols){ for(const id of Object.keys(S[c])){ del(c,id); if(DB) await sleep(35); } } toast('تم','ok'); }
+async function bulkDelete(cols){
+  if(!DB){ for(const c of cols){ for(const id of Object.keys(S[c])) del(c,id); } toast('تم','ok'); return; }
+  openModal(`<div class="modal-b" style="text-align:center;padding:28px"><div class="spin" style="margin:auto"></div><b>جارٍ الحذف… لا تسكرين الصفحة</b><div class="small muted" id="del-prog"></div></div>`);
+  let n=0;
+  for(const c of cols){ let snap; try{ snap=await DB.collection(c).get(); }catch(e){ continue; }
+    for(let i=0;i<snap.docs.length;i+=400){ const b=DB.batch(); snap.docs.slice(i,i+400).forEach(d=>b.delete(d.ref)); await b.commit().catch(onWriteErr); n+=Math.min(400,snap.docs.length-i); const pg=$('#del-prog'); if(pg) pg.textContent=`تم حذف ${n}`; }
+    S[c]={}; }
+  invalidate(); closeModal(); toast('تم الحذف','ok');
+}
 
 const FORMS = {
   setup: (f,e)=>doSetup(f, e.submitter?.value||'empty'),
