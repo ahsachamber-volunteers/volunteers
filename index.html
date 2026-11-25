@@ -1898,7 +1898,7 @@ function readLogo(file){
 }
 const setBrand = patch => { const c=cfg(); put('config','main',{...c, brand:{...(c.brand||{}), ...patch}}); };
 
-function nextCode(){ const codes=vols().map(v=>+v.code||0); return String(Math.max(1000,...codes)+1); }
+function nextCode(){ const codes=[...vols().map(v=>+v.code||0), ...Object.keys(S.secrets).map(k=>+k||0)]; return String(Math.max(1000,...codes)+1); }
 function createVolunteer({name, phone='', role='متطوع', zone='', pin, ...extra}){
   const id=uid('v'); const code=nextCode(); pin = pin || randPin();
   put('volunteers', id, {...extra, name:name.trim(), phone:phone.trim(), role, zone, code, status:'idle', statusAt:now(), createdAt:now(), zoneAt:now()});
@@ -3191,10 +3191,17 @@ const ACT = {
   'meal-use': ()=>mealStampModal(),
   'pay-toggle': el=>{ const c=cfg(); put('config','main',{...c, allowance:{amount:20, minHours:6, ...(c.allowance||{}), enabled:el.checked}}); },
   'payinfo-edit': ()=>payInfoModal(),
-  'reset-missing': async ()=>{ const list0=vols().filter(v=>!S.profiles[v.id]).sort((a,b)=>a.name.localeCompare(b.name,'ar'));
+  'reset-missing': async ()=>{
+    const groups={}; vols().forEach(v=>{ (groups[String(v.code)] ||= []).push(v); });
+    const dupe=Object.values(groups).filter(g=>g.length>1);
+    const fixIds=new Set(dupe.flat().map(v=>v.id));
+    const list0=vols().filter(v=>!S.profiles[v.id] || fixIds.has(v.id)).sort((a,b)=>a.name.localeCompare(b.name,'ar'));
     if(!list0.length) return toast('كل المتطوعين دخلوا وعبّوا بياناتهم 👏','ok');
-    if(!await askConfirm('رموز جديدة',`بيتم إنشاء رمز جديد لـ ${list0.length} متطوع ما دخلوا للحين، والرموز القديمة تتوقف. بعدها ترسلين لهم الرسائل الجديدة.`,'إنشاء الرموز')) return;
-    const out=[]; for(const v of list0){ const pin=randPin(); put('secrets', String(v.code), {...(secretOf(v)||{vid:v.id, phone:v.phone||''}), vid:v.id, pinHash:pinHash(pin,v.code)}); put('volunteers', v.id, (({credSent,...r})=>r)(S.volunteers[v.id])); out.push({id:v.id, name:v.name, phone:v.phone||secretOf(v)?.phone||'', code:v.code, pin}); if(DB) await sleep(40); }
+    if(!await askConfirm('رموز جديدة',`${dupe.length?`لقيت ${dupe.length} رقم مكرر وبيتصلح (كل واحد ياخذ رقم خاص فيه). `:''}بيتم إنشاء رمز جديد لـ ${list0.length} متطوع، والرموز القديمة تتوقف. بعدها ترسلين لهم الرسائل الجديدة.`,'إنشاء الرموز')) return;
+    for(const g of dupe){ const code=String(g[0].code); g.sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
+      if(DB){ try{ const ss=await DB.collection('sessions').where('code','==',code).get(); for(const d of ss.docs) await d.ref.delete().catch(()=>{}); }catch{} }
+      for(const v of g.slice(1)){ const nc=nextCode(); const cur=S.volunteers[v.id]; await put('volunteers', v.id, {...cur, code:nc}); S.volunteers[v.id]={...cur, code:nc}; put('secrets', nc, {vid:v.id, phone:cur.phone||secretOf(cur)?.phone||'', pinHash:'x'}); S.secrets[nc]={vid:v.id}; if(DB) await sleep(60); } }
+    const out=[]; for(const v0 of list0){ const v=S.volunteers[v0.id]; if(!v) continue; const pin=randPin(); put('secrets', String(v.code), {...(secretOf(v)||{phone:v.phone||''}), vid:v0.id, pinHash:pinHash(pin,v.code)}); put('volunteers', v0.id, (({credSent,...r})=>r)(S.volunteers[v0.id])); out.push({id:v0.id, name:v.name, phone:v.phone||secretOf(v)?.phone||'', code:v.code, pin}); if(DB) await sleep(40); }
     credsModal(out); },
   'creds-file': ()=>openModal(`<div class="modal-h"><h2>📲 إرسال بيانات الدخول</h2><button class="btn ghost sm" data-act="close-modal" aria-label="إغلاق">${ic('x')}</button></div><div class="modal-b stack"><p class="small muted" style="margin:0">اختاري ملف بيانات الدخول اللي نزلتيه بعد الاستيراد، وترجع لك قائمة الإرسال مع علامات ✓ اللي أرسلتيها قبل.</p><label class="btn primary">اختيار الملف<input type="file" accept=".csv,text/csv" data-creds-file hidden></label></div>`),
   'wa-mode': el=>{ lsSet('waMode', el.dataset.m); credsModal(CREDS_LAST); },
