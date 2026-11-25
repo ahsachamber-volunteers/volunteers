@@ -2057,7 +2057,8 @@ function landingView(){
       ${logoUrl()?`<img class="hero-logo${LA()}" src="${logoUrl()}" alt="شعار ${esc(c.eventName||'')}">`:''}
       <span class="pill accent nodot" style="justify-self:start">${c.eventDate ? esc(fmtDay(new Date(c.eventDate).getTime())) : 'منصة إدارة المتطوعين'}</span>
       <h1>${esc(c.eventName||'منصة إدارة المتطوعين')}</h1>
-      <p class="muted">${S.config?'اختر طريقة الدخول':'الفعالية لم تُجهز بعد. ادخل كمشرف لإعدادها.'}</p>
+      <p class="muted">${S.config?'اختر طريقة الدخول':(S.mode==='db' && (AUTH.err||S.slow))?'تعذّر تحميل بيانات الفعالية. تأكد من الإنترنت وأعد المحاولة، أو افتح الرابط من متصفح Safari أو Chrome.':'الفعالية لم تُجهز بعد. ادخل كمشرف لإعدادها.'}</p>
+      ${!S.config && S.mode==='db'?`<div class="row"><button class="btn primary" onclick="location.reload()">إعادة المحاولة</button>${AUTH.err?`<span class="tiny muted" dir="ltr">${esc(AUTH.err)}</span>`:''}</div>`:''}
     </div>
     <div class="doors">
       <button class="door" data-act="login-admin"><span class="ic">${ic('shield')}</span><h2>دخول المشرف</h2><span class="muted small">لوحة التحكم، الزونات، النقل الذكي، الملاحظات والتقارير.</span></button>
@@ -3438,8 +3439,8 @@ function startListeners(role){
     if(e && e.code==='permission-denied' && role==='vol'){ AUTH.volCode=null; toast('انتهت جلستك، سجّل دخولك من جديد','warn'); fbLogout(); }
     else if(e && e.code!=='permission-denied') toast('انقطع الاتصال بالبيانات. أعد فتح الصفحة.','crit');
     scheduleRender(); };
-  const onErr = onErrFor('config');
-  UNSUBS.push(DB.doc('config/main').onSnapshot(sn=>{ S.config = sn.exists ? sn.data() : null; clearTimeout(slowT); S.ready=true; S.slow=false; invalidate(); scheduleRender(); }, onErr));
+  const onErr = e=>{ AUTH.err=(e&&e.code)||'config'; onErrFor('config')(e); };
+  UNSUBS.push(DB.doc('config/main').onSnapshot({includeMetadataChanges:true}, sn=>{ if(!sn.exists && sn.metadata.fromCache) return; S.config = sn.exists ? sn.data() : null; AUTH.err=null; clearTimeout(slowT); S.ready=true; S.slow=false; invalidate(); scheduleRender(); }, onErr));
   if(role==='guest') return;
   COLS.forEach(c=>{
     if((c==='secrets'||c==='meals'||c==='payinfo'||c==='payouts'||c==='profiles') && role!=='admin') return;
@@ -3481,7 +3482,7 @@ async function boot(){
     stopListeners(); S.ready=false;
     AUTH.user=user; AUTH.volCode=null;
     AUTH.admin = !!(user && user.email) && await probeAdmin();
-    if(!user){ try{ await firebase.auth().signInAnonymously(); }catch(e){ S.ready=true; S.slow=true; scheduleRender(); } return; }
+    if(!user){ try{ await firebase.auth().signInAnonymously(); }catch(e){ AUTH.err=(e&&e.code)||'auth'; S.ready=true; S.slow=true; scheduleRender(); } return; }
     if(AUTH.admin){ startListeners('admin'); scheduleRender(); return; }
     if(user.email){ await firebase.auth().signOut(); return; }
     try{ const sn=await DB.collection('sessions').doc(user.uid).get(); if(sn.exists){ let stale=false; try{ const cf=await DB.doc('config/main').get(); stale=!cf.exists || (cf.data().createdAt||0) > (sn.data().at||0); }catch{} if(stale){ await sn.ref.delete().catch(()=>{}); } else { AUTH.volCode=sn.data().code; startListeners('vol'); scheduleRender(); return; } } }catch{}
