@@ -546,6 +546,133 @@ td.n{font-variant-numeric:tabular-nums}
 .pulse-thx{display:grid;gap:4px;font-size:.9rem;border-top:1px dashed var(--line);padding-top:8px}
 @media (max-width:560px){ .pulse-n{grid-template-columns:repeat(2,minmax(0,1fr))} .chk-grid{grid-template-columns:repeat(2,minmax(0,1fr))} }
 @media (prefers-reduced-motion:reduce){ .thx-heart,.pulse-heart,.story-anim div{animation:none;opacity:1;transform:none} }
+/* ===== بهجة شاشة العمليات ===== */
+.wall{position:relative;z-index:1;background:transparent}
+body:has(#wall-fx){background:#120a09}
+#wall-fx{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;background:radial-gradient(90% 60% at 50% 0%,#3a110c 0%,#160b09 55%,#0d0706 100%)}
+#wall-fx .glow{position:absolute;border-radius:50%;filter:blur(80px);opacity:.35}
+#wall-fx .g1{width:46vw;height:46vw;background:#7a2a1c;top:-14vw;right:-10vw;animation:drift 22s ease-in-out infinite alternate}
+#wall-fx .g2{width:38vw;height:38vw;background:#8a5530;bottom:-16vw;left:-8vw;animation:drift 28s ease-in-out infinite alternate-reverse}
+@keyframes drift{to{transform:translate(-8vw,6vw) scale(1.15)}}
+#wall-fx .fb{position:absolute;left:var(--x);bottom:-60px;width:calc(42px*var(--s));fill:#C98A5A;opacity:.28;animation:fly var(--d) linear infinite;animation-delay:var(--dl)}
+#wall-fx .fb svg{width:100%;display:block;animation:flap .5s ease-in-out infinite alternate;transform-origin:center}
+@keyframes fly{0%{transform:translate(0,0) rotate(-8deg)}25%{transform:translate(4vw,-30vh) rotate(10deg)}50%{transform:translate(-3vw,-60vh) rotate(-12deg)}75%{transform:translate(5vw,-90vh) rotate(6deg)}100%{transform:translate(0,-120vh) rotate(-6deg)}}
+@keyframes flap{to{transform:scaleX(.55)}}
+.wall .wall-top h1{background:linear-gradient(90deg,#f7e3c7,#d9a072,#f7e3c7);-webkit-background-clip:text;background-clip:text;color:transparent;background-size:200% 100%;animation:shine 6s linear infinite}
+@keyframes shine{to{background-position:200% 0}}
+.wall .wz,.wall .wall-box,.wall .kpi{background:color-mix(in srgb,var(--surface) 82%,transparent);backdrop-filter:blur(6px)}
+.wall-hero{display:grid;grid-template-columns:1.25fr 1fr;gap:16px}
+@media (max-width:1000px){.wall-hero{grid-template-columns:1fr}}
+.wall .pulse{background:linear-gradient(135deg,#5A171255,#c98a5a1a);border-color:#C98A5A55}
+.wall .pulse-n b{font-size:clamp(2.2rem,4vw,3.6rem);color:#f7e3c7;transition:transform .3s}
+.wall .pulse-n b.bump{transform:scale(1.18);color:#ffd9a8}
+.spot{position:relative;border:1px solid #C98A5A55;border-radius:16px;background:linear-gradient(160deg,#2a1210cc,#1a0d0bcc);padding:16px 18px 26px;min-height:190px;overflow:hidden;display:grid}
+.spot-in.enter{animation:spin .7s cubic-bezier(.2,.8,.2,1)}
+@keyframes spin{from{opacity:0;transform:translateY(18px) scale(.97)}to{opacity:1;transform:none}}
+.sp-h{font-family:var(--font-display);font-weight:700;color:#d9a072;font-size:1.05rem;margin-bottom:10px}
+.sp-top{display:flex;gap:12px;justify-content:space-around;align-items:flex-end}
+.sp-p{display:grid;justify-items:center;gap:4px;position:relative;text-align:center}
+.sp-p b{font-size:1rem}.sp-p span{font-size:.8rem;color:var(--muted)}
+.sp-p i{position:absolute;top:-10px;inset-inline-start:-6px;font-style:normal;font-size:1.3rem}
+.av.sp-av{width:58px;height:58px;border-radius:50%;font-size:1.2rem;box-shadow:0 0 0 3px #C98A5A}
+.sp-p.r0 .av.sp-av{width:78px;height:78px;font-size:1.5rem;box-shadow:0 0 0 4px #f3c46b,0 0 24px #f3c46b66}
+.sp-thx{display:flex;gap:16px;align-items:center}
+.av.sp-big{width:92px;height:92px;border-radius:50%;font-size:1.8rem;box-shadow:0 0 0 4px #C98A5A,0 0 30px #C98A5A55;flex:none}
+.sp-q{font-family:var(--font-display);font-weight:700;font-size:clamp(1.2rem,2vw,1.7rem);line-height:1.4;color:#fff3e4}
+.sp-st{color:#f3c46b;font-size:1.3rem;letter-spacing:2px}
+.sp-who{color:var(--muted);font-size:.92rem;margin-top:4px}
+.sp-day{display:flex;align-items:baseline;gap:10px;justify-content:center;font-size:1.2rem;color:var(--muted)}
+.sp-day b{font-family:var(--font-display);font-size:4.2rem;color:#f7e3c7;line-height:1}
+.sp-bar{height:10px;border-radius:99px;background:#ffffff14;overflow:hidden;margin:8px 0}
+.sp-bar i{display:block;height:100%;background:linear-gradient(90deg,#B4683C,#f3c46b);border-radius:99px}
+.spot-dots{position:absolute;bottom:10px;left:0;right:0;display:flex;gap:6px;justify-content:center}
+.spot-dots i{width:7px;height:7px;border-radius:50%;background:#ffffff33}.spot-dots i.on{background:#d9a072;width:20px;border-radius:9px}
+.wz-av{display:flex;flex-wrap:wrap;gap:4px;align-items:center}
+.av.wz-a{width:30px;height:30px;border-radius:50%;font-size:.7rem;box-shadow:0 0 0 2px var(--surface)}
+.wz-more{font-size:.8rem;color:var(--muted);margin-inline-start:4px}
+.wall .wz.hot{animation:hotpulse 1.6s ease-in-out infinite}
+@keyframes hotpulse{50%{box-shadow:0 0 0 4px #f8717155,0 0 30px #f8717144}}
+.glory-in{background:linear-gradient(160deg,#3a110c,#1c0a08)!important;border-color:#d9a072!important}
+.glory-tag{background:#d9a072!important;color:#1d0b07!important}
+.av.glory-av{width:150px;height:150px;border-radius:50%;box-shadow:0 0 0 6px #d9a072,0 0 50px #d9a07288;font-size:3rem}
+@media (prefers-reduced-motion:reduce){#wall-fx .fb,#wall-fx .glow,.wall .wall-top h1,.wall .wz.hot,.spot-in.enter{animation:none}}
+.wall .ticker{background:linear-gradient(90deg,#3a1510,#5A1712 50%,#3a1510)!important;color:#f7e3c7!important;border:1px solid #C98A5A66!important}
+.wall .ticker *{color:inherit}
+#wall-fx .fb{opacity:.36}
+/* ===== شاشة العرض «نبت» ===== */
+.wall.nb{background:transparent;color:#F7EBDD;padding:30px 56px 0;gap:0;min-height:100vh;display:flex;flex-direction:column;font-size:clamp(13px,1vw,18px)}
+.wall.nb .nb-mid{flex:1}
+body:has(.wall.nb) #wall-fx{background:#43100B!important}
+body:has(.wall.nb) #wall-fx .glow{display:none}
+.nb-top-bar{display:grid;grid-template-columns:1fr auto 1fr;align-items:start;gap:20px}
+.nb-brand img{height:3.3em;max-width:12em;object-fit:contain}
+.nb-title{text-align:center}
+.nb-title h1{font-family:var(--font-display);font-weight:700;font-size:3.6em;line-height:1.1;color:#F7EBDD;background:none!important;-webkit-text-fill-color:currentColor;animation:none!important}
+.nb-sub{font-family:var(--font-display);font-weight:600;font-size:1.3em;color:#d9bfa9;margin-top:.2em}
+.nb-sq{position:relative;display:inline-block;color:#E8B07A}
+.nb-sq svg{position:absolute;left:-4%;bottom:-.6em;width:108%;height:.7em}
+.nb-clock{justify-self:end;text-align:left;direction:rtl}
+.nb-clock b{font-family:var(--font-display);font-weight:600;font-size:2.1em;display:block;text-align:left}
+.nb-clock div{font-size:.8em;color:#d9bfa9}
+.nb-link,.nb-al{background:none;border:0;color:#d9bfa9;font:inherit;cursor:pointer;text-decoration:underline;text-underline-offset:3px;padding:0}
+.nb-al{color:#fca5a5;font-weight:700}
+.nb-mid{display:grid;grid-template-columns:1.15fr 1fr;align-items:center;gap:30px;padding-top:1.5em}
+.nb-story{display:grid;gap:.8em;align-content:center}
+.nb-slide{display:grid;gap:.8em;min-height:12em;align-content:center}
+.nb-slide.enter{animation:spin .8s cubic-bezier(.2,.8,.2,1)}
+.nb-k{font-family:var(--font-display);font-weight:600;font-size:1.1em;color:#E8B07A}
+.nb-q{font-family:var(--font-display);font-weight:700;font-size:2.6em;line-height:1.45;color:#F7EBDD}
+.nb-who{display:flex;align-items:center;gap:.7em;font-size:1.1em;color:#d9bfa9;flex-wrap:wrap}
+.nb-who b{color:#F7EBDD}
+.nb-st{color:#E0A526;letter-spacing:3px}
+.av.nb-av{width:3.2em;height:3.2em;border-radius:50%;font-size:1em;box-shadow:0 0 0 3px #E8B07A}
+.nb-top{display:flex;gap:1.4em;align-items:flex-end;flex-wrap:wrap}
+.nb-p{display:grid;justify-items:center;gap:.25em;position:relative;text-align:center}
+.nb-p b{font-size:1.05em;color:#F7EBDD}.nb-p span{font-size:.85em;color:#d9bfa9}
+.nb-p i{position:absolute;top:-.6em;inset-inline-start:-.3em;font-style:normal;font-size:1.3em}
+.av.nb-pav{width:3.6em;height:3.6em;border-radius:50%;font-size:1.1em;box-shadow:0 0 0 3px #E8B07A}
+.nb-p.first .av.nb-pav{width:4.8em;height:4.8em;box-shadow:0 0 0 4px #E0A526,0 0 24px #E0A52666}
+.nb-nums{display:flex;align-items:flex-end;margin-top:1.2em}
+.nb-nums div{display:grid;padding:0 1.5em;position:relative}
+.nb-nums div:first-child{padding-inline-start:0}
+.nb-nums div+div:before{content:"";position:absolute;inset-inline-start:-4px;top:40%;width:8px;height:8px;border-radius:50%;background:var(--c)}
+.nb-nums b{font-family:var(--font-display);font-weight:600;font-size:3.2em;line-height:1;color:#F7EBDD;transition:transform .3s}
+.nb-nums b.bump{transform:scale(1.15);color:#ffd9a8}
+.nb-nums small{font-size:.4em;opacity:.6}
+.nb-nums span{font-size:.9em;color:#d9bfa9;margin-top:.25em}
+.nb-dots{display:flex;gap:6px;margin-top:.6em}
+.nb-dots i{width:7px;height:7px;border-radius:50%;background:#F7EBDD33}.nb-dots i.on{width:20px;border-radius:9px;background:#E8B07A}
+.nb-art{position:relative;height:min(60vh,620px)}
+.nb-glow{position:absolute;height:88%;aspect-ratio:1;left:50%;top:50%;translate:-50% -50%;border-radius:50%;background:radial-gradient(circle,#c98a5a66 0%,#7a2a1c55 45%,transparent 70%)}
+.wall .palm{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.palm .fr{transform-box:view-box;transform-origin:205px 176px;transition:opacity 1s,filter 1s}
+.palm .fr.f-ok{animation:sway 5s ease-in-out infinite alternate;animation-delay:calc(var(--d) * -1)}
+.palm .fr.f-short{opacity:.62;filter:saturate(.55)}
+.palm .fr.f-crowd{animation:frp 1.3s ease-in-out infinite}
+.palm .fr.f-idle{opacity:.55}
+@keyframes sway{from{transform:rotate(-2.2deg)}to{transform:rotate(2.2deg)}}
+@keyframes frp{50%{filter:brightness(1.5) drop-shadow(0 0 8px #ffb4a0);transform:scale(1.04)}}
+.palm .bud{animation:budp 2.4s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
+@keyframes budp{50%{transform:scale(1.25)}}
+.palm .rays{animation:rays 2.4s ease-in-out infinite}
+@keyframes rays{50%{opacity:.35}}
+.palm .pbf{animation:pbf 6s ease-in-out infinite alternate}
+.palm .pbf.b2{animation-duration:8s}
+@keyframes pbf{to{translate:-14px -22px}}
+.nb-zones{display:grid;border-top:2px dashed #F7EBDD40;padding:1em 0 1.1em;margin-top:.6em}
+.nb-z{display:grid;grid-auto-flow:row;justify-items:center;gap:.35em;text-align:center}
+.nb-z h3{font-family:var(--font-display);font-weight:600;font-size:1.15em;display:flex;gap:.5em;align-items:center;color:#F7EBDD}
+.nb-z h3:before{content:"";width:.65em;height:.65em;border-radius:50%;background:var(--c)}
+.nb-z.z-crowd h3:before{animation:dotp 1.4s infinite;box-shadow:0 0 0 0 var(--c)}
+.nb-z.z-short .nb-n{color:#fca5a5}
+.nb-n{font-family:var(--font-display);font-weight:600;font-size:1.9em;line-height:1}
+.nb-n small{font-size:.5em;color:#d9bfa9;font-family:var(--font-body)}
+.nb-avs{display:flex;align-items:center}
+.av.nb-za{width:2.1em;height:2.1em;border-radius:50%;font-size:.75em;border:2.5px solid #43100B;margin-inline-end:-.55em;background:var(--zc)}
+.nb-more{font-size:.85em;color:#d9bfa9;margin-inline-start:.9em}
+.nb-stripe{height:14px;margin:0 -56px;display:grid;grid-auto-flow:column;grid-auto-columns:1fr}
+@media (max-width:900px){.nb-mid{grid-template-columns:1fr}.nb-art{height:40vh}.nb-top-bar{grid-template-columns:1fr}.nb-clock{justify-self:start}}
+@media (prefers-reduced-motion:reduce){.palm *{animation:none!important}}
 </style>
 </head>
 <body>
@@ -640,7 +767,7 @@ const CROWD = [
   {t:'حرج', c:'crit', m:1.7},
 ];
 const ROLES = ['متطوع','قائد فريق','تنظيم حشود','استقبال وإرشاد','إسعافات أولية','دعم فني','لوجستيات','تصوير وإعلام'];
-const ZCOLORS = ['#0e7490','#7c3aed','#c2410c','#15803d','#be185d','#4d7c0f','#1d4ed8','#a16207','#0f766e','#9333ea'];
+const ZCOLORS = ['#8B5A3C','#2E7D73','#E0A526','#D9692E','#B8364A','#7A4E9A','#3E6FA8','#5E8C3A','#C2547A','#6B7280'];
 const ALERT_T = {crowd:{t:'زحمة',c:'warn',i:'crowd'}, help:{t:'طلب دعم',c:'info',i:'help'}, medical:{t:'حالة طبية',c:'crit',i:'med'}};
 /* التحفيز */
 const PTS = {checkin:10, hour:10, ontime:5, crowd:15, praise:20, star:4, report:5, finder:25, visitor:5};
@@ -1112,13 +1239,122 @@ function thanksPortal(vid){
     <button class="btn sm" data-act="id-card" data-id="${vid}">${ic('qr')} اعرض بطاقتي للزائر</button>
   </div></section>`;
 }
+/* ---------- بهجة شاشة العمليات ---------- */
+const WALL={i:0, shown:-1, prev:{}, t:null};
+function wallSlides(){
+  const lb=leaderboard().filter(x=>x.g.p>0).slice(0,5);
+  const ds=dayStart(); const thx=Object.values(S.thanks).sort((a,b)=>b.at-a.at);
+  const longest=vols().map(v=>({v, w:workedSince(v.id, ds)})).filter(x=>x.w>0).sort((a,b)=>b.w-a.w)[0];
+  const days=new Set(Object.values(S.logs).filter(l=>l.type==='in').map(l=>dayKey(l.at))).size;
+  const total=+(cfg().eventDays)||10;
+  const S0=[];
+  if(lb.length) S0.push(`<div class="sp-h">🏆 نجوم الفعالية</div><div class="sp-top">${lb.map((x,i)=>`<div class="sp-p r${i}">${avatar(x.v.id,'av sp-av')}<b>${esc(firstName(x.v.name))}</b><span class="num">${x.g.p} نقطة</span>${i<3?`<i>${['🥇','🥈','🥉'][i]}</i>`:''}</div>`).join('')}</div>`);
+  if(thx[0]){ const t=thx[0]; const v=findByCode(t.code); if(v) S0.push(`<div class="sp-h">💚 من قلب زائر</div><div class="sp-thx">${avatar(v.id,'av sp-big')}<div><div class="sp-q">«${esc(t.msg||'شكراً لك')}»</div>${t.stars?`<div class="sp-st">${'★'.repeat(t.stars)}</div>`:''}<div class="sp-who">إلى ${esc(v.name)} · ${ago(t.at)}</div></div></div>`); }
+  if(longest) S0.push(`<div class="sp-h">⏱️ الأطول عطاءً اليوم</div><div class="sp-thx">${avatar(longest.v.id,'av sp-big')}<div><div class="sp-q">${esc(longest.v.name)}</div><div class="sp-who num">${fmtDur(longest.w)} من العطاء في ${esc(zName(longest.v.zone))}</div></div></div>`);
+  S0.push(`<div class="sp-h">✨ ${esc(cfg().eventName||'')}</div><div class="sp-day"><span>اليوم</span><b class="num">${Math.max(1,days)}</b><span>من ${total}</span></div><div class="sp-bar"><i style="width:${Math.min(100,Math.round(Math.max(1,days)/total*100))}%"></i></div><div class="sp-who">شكراً لكل متطوع يصنع الفرق 🤎</div>`);
+  return S0;
+}
+function wallSpot(){
+  const sl=wallSlides(); if(!sl.length) return '';
+  const i=WALL.i % sl.length; const fresh=WALL.shown!==WALL.i; WALL.shown=WALL.i;
+  return `<section class="spot"><div class="spot-in ${fresh?'enter':''}">${sl[i]}</div><div class="spot-dots">${sl.map((_,k)=>`<i class="${k===i?'on':''}"></i>`).join('')}</div></section>`;
+}
+function wallFx(on){
+  let fx=$('#wall-fx');
+  if(!on){ if(fx) fx.remove(); if(WALL.t){ clearInterval(WALL.t); WALL.t=null; } return; }
+  if(!WALL.t) WALL.t=setInterval(()=>{ WALL.i++; scheduleRender(); }, 9000);
+  if(fx) return;
+  fx=document.createElement('div'); fx.id='wall-fx'; fx.setAttribute('aria-hidden','true');
+  fx.innerHTML=Array.from({length:9},(_,k)=>`<span class="fb" style="--x:${(k*11+7)%96}%;--d:${16+(k*7)%14}s;--dl:-${(k*5)%17}s;--s:${.6+(k%4)*.25}">${BFLY}</span>`).join('')+'<div class="glow g1"></div><div class="glow g2"></div>';
+  document.body.appendChild(fx);
+}
+function countUp(){
+  $$('[data-count]').forEach(el=>{ const k=el.dataset.count, to=+el.dataset.to||0, from=WALL.prev[k]; WALL.prev[k]=to;
+    if(from==null || from===to) return; el.classList.add('bump'); const t0=performance.now(), dur=1200;
+    const step=t=>{ const p=Math.min(1,(t-t0)/dur); el.textContent=Math.round(from+(to-from)*(1-Math.pow(1-p,3))).toLocaleString('en'); if(p<1) requestAnimationFrame(step); else setTimeout(()=>el.classList.remove('bump'),400); };
+    requestAnimationFrame(step); });
+}
+/* ---------- شاشة العمليات بروح «نبت» ---------- */
+const FRONDS=[
+  {d:'M205 175 C150 110, 90 112, 40 160 C95 140, 150 150, 205 175z', v:'M200 172 C150 140, 100 140, 55 157'},
+  {d:'M205 175 C255 110, 315 112, 365 160 C310 140, 255 150, 205 175z', v:'M210 172 C260 140, 310 140, 350 157'},
+  {d:'M205 172 C170 120, 165 80, 190 40 C195 90, 205 130, 205 172z', v:''},
+  {d:'M205 172 C240 120, 245 80, 222 38 C214 90, 206 130, 205 172z', v:''},
+  {d:'M205 178 C150 170, 95 205, 70 262 C120 225, 165 205, 205 178z', v:'M198 178 C150 185, 110 215, 85 250'},
+  {d:'M205 178 C260 170, 315 205, 340 262 C290 225, 245 205, 205 178z', v:'M212 178 C260 185, 300 215, 325 250'},
+];
+function palmSvg(st){
+  const fr=FRONDS.map((f,i)=>{ const s=st[i]; const col=s?s.z.color:'#c98a5a'; const cls=!s?'f-idle':(s.z.crowd??1)>=3&&s.gap>0?'f-crowd':s.gap>0?'f-short':'f-ok';
+    return `<g class="fr ${cls}" style="--d:${(i*0.7).toFixed(1)}s"><path d="${f.d}" fill="${esc(col)}"/>${f.v?`<path d="${f.v}" stroke-width="1.6" opacity=".7"/>`:''}</g>`; }).join('');
+  const B='<path d="M31 24C27 10 16 1 8 3 1 5 2 15 8 20c5 4 14 5 23 4zM33 24C37 10 48 1 56 3c7 2 6 12 0 17-5 4-14 5-23 4zM31 26c-9 0-17 3-18 10-1 6 5 10 10 7 4-3 7-10 8-17zM33 26c9 0 17 3 18 10 1 6-5 10-10 7-4-3-7-10-8-17z"/>';
+  return `<svg class="palm" viewBox="0 0 400 560" fill="none" stroke="#F7EBDD" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <defs><filter id="rough"><feTurbulence type="fractalNoise" baseFrequency=".035" numOctaves="2" seed="4"/><feDisplacementMap in="SourceGraphic" scale="3.5"/></filter></defs>
+    <g filter="url(#rough)">
+      <g class="rays"><path d="M200 30v-22M160 42l-12-16M240 42l12-16M128 70l-18-8M272 70l18-8"/></g>
+      <circle class="bud" cx="200" cy="78" r="13" fill="#5AA469"/>
+      <path d="M196 540 C190 430, 210 330, 200 175" stroke-width="3.6"/><path d="M208 540 C203 430, 221 330, 210 178" stroke-width="2.4" opacity=".6"/>
+      <path d="M194 510l16 -4M194 478l18-4M196 446l18-4M198 414l18-4M200 382l18-4M202 350l16-4M203 318l16-4M204 286l15-4M204 254l14-4M204 222l12-3"/>
+      ${fr}
+      <path d="M196 196 c-10 18 -14 30 -12 44M214 196 c10 18 14 30 12 44" stroke-width="2"/>
+      <g fill="#8B5A3C"><circle cx="182" cy="244" r="7"/><circle cx="192" cy="252" r="7"/><circle cx="178" cy="257" r="6.5"/><circle cx="228" cy="244" r="7"/><circle cx="218" cy="252" r="7"/><circle cx="232" cy="257" r="6.5"/></g>
+      <path d="M70 542 C130 528, 270 528, 330 542" stroke-width="2.6"/>
+    </g>
+    <g class="pbf" transform="translate(300 300) rotate(15) scale(.55)" fill="#E8B07A" stroke="none">${B}</g>
+    <g class="pbf b2" transform="translate(70 330) rotate(-20) scale(.38)" fill="#E8B07A" stroke="none" opacity=".7">${B}</g>
+  </svg>`;
+}
+function nbSlides(){
+  const lb=leaderboard().filter(x=>x.g.p>0).slice(0,5);
+  const ds=dayStart(); const thx=Object.values(S.thanks).sort((a,b)=>b.at-a.at);
+  const longest=vols().map(v=>({v, w:workedSince(v.id, ds)})).filter(x=>x.w>0).sort((a,b)=>b.w-a.w)[0];
+  const out=[];
+  thx.slice(0,3).forEach(t=>{ const v=findByCode(t.code); if(v) out.push(`<div class="nb-k">💚 من قلب زائر</div><div class="nb-q">«${esc(t.msg||'شكراً لك من القلب')}»</div><div class="nb-who">${avatar(v.id,'av nb-av')}<span>إلى <b>${esc(v.name)}</b>${v.zone?` · ${esc(zName(v.zone))}`:''}</span>${t.stars?`<span class="nb-st">${'★'.repeat(t.stars)}</span>`:''}</div>`); });
+  if(lb.length) out.push(`<div class="nb-k">🏆 نجوم الفعالية</div><div class="nb-top">${lb.map((x,i)=>`<div class="nb-p ${i===0?'first':''}">${avatar(x.v.id,'av nb-pav')}<b>${esc(firstName(x.v.name))}</b><span class="num">${x.g.p}</span>${i<3?`<i>${['🥇','🥈','🥉'][i]}</i>`:''}</div>`).join('')}</div>`);
+  if(longest) out.push(`<div class="nb-k">⏱️ الأطول عطاءً اليوم</div><div class="nb-q">${esc(longest.v.name)}</div><div class="nb-who">${avatar(longest.v.id,'av nb-av')}<span><b class="num">${fmtDur(longest.w)}</b> من العطاء${longest.v.zone?` في ${esc(zName(longest.v.zone))}`:''}</span></div>`);
+  out.push(`<div class="nb-k">✨ رسالة اليوم</div><div class="nb-q">كل ابتسامة منكم<br>تصنع ذكرى لزائر 🤎</div><div class="nb-who"><span>شكراً لكل متطوع في ${esc(cfg().eventName||'الفعالية')}</span></div>`);
+  return out;
+}
+function wallView(){
+  if(UI.wallOps) return wallOpsView();
+  const all=vols(); const st=zoneStats(); const c=cfg();
+  const hrs=all.reduce((t,v)=>t+workedMs(v.id),0)/3600000; const thx=Object.keys(S.thanks).length;
+  const today=all.filter(v=>(idx().byV[v.id]||[]).some(l=>l.type==='in' && l.at>=dayStart())).length;
+  const days=Math.max(1,new Set(Object.values(S.logs).filter(l=>l.type==='in').map(l=>dayKey(l.at))).size); const total=+(c.eventDays)||10;
+  const sl=nbSlides(); const i=WALL.i%sl.length; const fresh=WALL.shown!==WALL.i; WALL.shown=WALL.i;
+  const alerts=Object.values(S.alerts).filter(a=>!a.resolved).length; const em=c.emergency;
+  const stripe=(st.length?st.map(s=>s.z.color):['#8B5A3C','#2E7D73','#E0A526','#D9692E','#B8364A','#7A4E9A']);
+  return `<div class="wall nb">
+    <div class="nb-top-bar">
+      <div class="nb-brand">${logoUrl()?`<img src="${logoUrl()}" alt="">`:''}</div>
+      <div class="nb-title"><h1>${esc(c.eventName||'')}</h1><div class="nb-sub">فريق التطوع · <span class="nb-sq">نبض العطاء<svg viewBox="0 0 200 14" preserveAspectRatio="none"><path d="M2 9 C30 3, 55 12, 85 7 S 140 3, 198 8" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></span></div></div>
+      <div class="nb-clock"><b data-clock>${new Date().toLocaleTimeString('ar-u-nu-latn',{hour:'2-digit',minute:'2-digit'})}</b><div><span class="live">مباشر</span>${alerts?` · <button class="nb-al" data-act="wall-ops">${alerts} بلاغ</button>`:''} · <button class="nb-link" data-act="wall-ops">التفاصيل</button> · <button class="nb-link" data-act="tab" data-tab="dash">خروج</button></div></div>
+    </div>
+    ${goldBanner()}
+    ${em?.active?`<div class="em-panel" style="margin:0"><b style="font-size:1.4rem">طوارئ: ${EM_T[em.type]}</b><div>${esc(em.msg)}</div></div>`:''}
+    <div class="nb-mid">
+      <div class="nb-story">
+        <div class="nb-slide ${fresh?'enter':''}">${sl[i]}</div>
+        <div class="nb-nums">
+          <div><b class="num" data-count="v" data-to="${today}">${today}</b><span>متطوع اليوم</span></div>
+          <div style="--c:#E0A526"><b class="num" data-count="h" data-to="${Math.round(hrs)}">${Math.round(hrs).toLocaleString('en')}</b><span>ساعة عطاء</span></div>
+          <div style="--c:#D9692E"><b class="num" data-count="t" data-to="${thx}">${thx.toLocaleString('en')}</b><span>شكر من الزوار</span></div>
+          <div style="--c:#7A4E9A"><b class="num">${days}<small>/${total}</small></b><span>يوم</span></div>
+        </div>
+        <div class="nb-dots">${sl.map((_,k)=>`<i class="${k===i?'on':''}"></i>`).join('')}</div>
+      </div>
+      <div class="nb-art"><div class="nb-glow"></div>${palmSvg(st)}</div>
+    </div>
+    <div class="nb-zones" style="grid-template-columns:repeat(${Math.max(1,st.length)},1fr)">${st.map(s=>{ const cls=(s.z.crowd??1)>=3&&s.gap>0?'z-crowd':s.gap>0?'z-short':'z-ok'; return `<div class="nb-z ${cls}" style="--c:${esc(s.z.color)}"><h3>${esc(s.z.name)}</h3><div class="nb-n num">${s.active.length}<small> / ${s.need}</small></div><div class="nb-avs">${s.active.slice(0,7).map(v=>avatar(v.id,'av nb-za')).join('')}${s.active.length>7?`<span class="nb-more num">+${s.active.length-7}</span>`:''}</div></div>`; }).join('')}</div>
+    <div class="nb-stripe">${stripe.map(col=>`<i style="background:${esc(col)}"></i>`).join('')}</div>
+  </div>`;
+}
 /* ---------- نبض الفعالية ---------- */
 function pulseHtml(){
   const all=vols(); const hrs=all.reduce((t,v)=>t+workedMs(v.id),0)/3600000; const thx=Object.keys(S.thanks).length;
   const days=new Set(Object.values(S.logs).filter(l=>l.type==='in').map(l=>dayKey(l.at))).size;
   const last=Object.values(S.thanks).sort((a,b)=>b.at-a.at).slice(0,3);
   return `<div class="pulse"><div class="pulse-h"><span class="pulse-heart">💓</span><b>نبض الفعالية</b></div>
-    <div class="pulse-n"><div><b class="num">${all.length}</b><span>متطوع</span></div><div><b class="num">${Math.round(hrs).toLocaleString('en')}</b><span>ساعة عطاء</span></div><div><b class="num">${thx.toLocaleString('en')}</b><span>شكر من الزوار</span></div><div><b class="num">${days}</b><span>يوم</span></div></div>
+    <div class="pulse-n"><div><b class="num" data-count="v" data-to="${all.length}">${all.length}</b><span>متطوع</span></div><div><b class="num" data-count="h" data-to="${Math.round(hrs)}">${Math.round(hrs).toLocaleString('en')}</b><span>ساعة عطاء</span></div><div><b class="num" data-count="t" data-to="${thx}">${thx.toLocaleString('en')}</b><span>شكر من الزوار 💚</span></div><div><b class="num" data-count="d" data-to="${days}">${days}</b><span>يوم</span></div></div>
     ${last.length?`<div class="pulse-thx">${last.map(t=>{ const v=findByCode(t.code); return `<div>💚 زائر شكر <b>${esc(v?.name||t.n||'')}</b>${t.msg?`: «${esc(t.msg)}»`:''}</div>`; }).join('')}</div>`:''}
   </div>`;
 }
@@ -1390,7 +1626,7 @@ function feedEvents(){
     else if(n.kind==='box') E.push({at:n.at, t:`${nm(n.v)} فتح صندوق المفاجآت وطلع له ${n.reward?.t||''}`, glory:!!n.reward?.rare, v:n.v, i:'gift'});
   });
   Object.values(S.lost).forEach(x=>{ if(x.status==='found' && x.foundBy && x.foundBy!=='admin') E.push({at:x.foundAt, t:`${nm(x.foundBy)} لقى ${LOST_T[x.kind]}، شكراً يا بطل`, glory:true, v:x.foundBy, i:'eye'}); });
-  Object.values(S.thanks).forEach(t=>{ const tv=findByCode(t.code); if(tv) E.push({at:t.at, t:`زائر شكر ${tv.name} 💚${t.msg?' «'+String(t.msg).slice(0,60)+'»':''}`, v:tv.id, i:'heart'}); });
+  Object.values(S.thanks).forEach(t=>{ const tv=findByCode(t.code); if(tv) E.push({at:t.at, t:`زائر شكر ${tv.name} 💚${t.msg?' «'+String(t.msg).slice(0,60)+'»':''}`, glory:true, thx:true, v:tv.id, i:'heart'}); });
   Object.values(S.missions).forEach(m=>{ if(m.status==='done' && m.doneAt) E.push({at:m.doneAt, t:`تمت مهمة «${m.title}» بفزعة ${(m.takers||[]).map(nm).join(' و')}`, i:'flag'}); });
   Object.entries(S.legend).forEach(([lid,d])=>{ const lg=LEGENDS.find(x=>x.id===lid); (d.claims||[]).forEach(c=>E.push({at:c.at, t:`${nm(c.v)} حصل على الملصق الأسطوري «${lg?.t||''}»`, glory:true, v:c.v, i:'star'})); });
   vols().forEach(v=>{ (v.lvlUps||[]).forEach(u=>E.push({at:u.at, t:`${v.name} وصل المستوى ${LEVELS[u.l]?.t||''}`, glory:true, v:v.id, i:'trophy'})); gami(v.id).milestones.forEach(m=>E.push({at:m.at, t:`${v.name} وصل سلسلة ${m.n} التزامات متتالية`, glory:m.n>=6, v:v.id, i:'flame'})); });
@@ -1423,7 +1659,7 @@ function nextGlory(){
   if(getSes()?.role==='kiosk' && GLORY.q.length && !['code'].includes(UI.kiosk.step)){ GLORY.on=true; el.classList.remove('open'); setTimeout(()=>{ GLORY.on=false; nextGlory(); }, 3000); return; }
   const e=GLORY.q.shift(); if(!e){ GLORY.on=false; el.classList.remove('open'); return; }
   GLORY.on=true; const v=S.volunteers[e.v];
-  el.innerHTML=`<div class="glory-in"><div class="glory-tag">لحظة المجد</div>${ic(e.i,'icon glory-ic')}<div class="glory-name">${esc(v?.name||'')}</div><div class="glory-t">${esc(e.t)}</div></div>`;
+  el.innerHTML=`<div class="glory-in"><div class="glory-tag">${e.thx?'شكر من زائر 💚':'لحظة المجد'}</div>${e.v&&profOf(e.v)?.photo?avatar(e.v,'av glory-av'):ic(e.i,'icon glory-ic')}<div class="glory-name">${esc(v?.name||'')}</div><div class="glory-t">${esc(e.t)}</div></div>`;
   el.classList.add('open'); confetti(200); setTimeout(nextGlory, 7000);
 }
 
@@ -1699,6 +1935,7 @@ function render(){
   if(oldTicker){ const nt=app.querySelector('.ticker'); if(nt && nt.dataset.sig===oldTicker.dataset.sig) nt.replaceWith(oldTicker); }
   const lu=app.querySelector('.lvlup'); if(lu){ const k=getSes()?.id+':'+(lu.querySelector('h2')?.textContent||''); if(FX.lvl!==k){ FX.lvl=k; confetti(220); } }
   if(UI.kiosk.step==='done' && UI.kiosk.lu && !UI.kiosk.fx){ UI.kiosk.fx=true; confetti(220); }
+  wallFx(getSes()?.role==='admin' && location.hash==='#ops-wall'); if(location.hash==='#ops-wall') countUp();
   checkGlory();
 }
 function view(){
@@ -2655,7 +2892,7 @@ function lostModal(){
 }
 
 /* ---------- شاشة العمليات ---------- */
-function wallView(){
+function wallOpsView(){
   const all=vols(); const cnt=s=>all.filter(v=>v.status===s).length; const st=zoneStats();
   const alerts=Object.values(S.alerts).filter(a=>!a.resolved).sort((a,b)=>b.at-a.at);
   const pk=peaks().filter(p=>peakState(p)!=='past').slice(0,4); const ms=liveMissions(); const lost=openLost();
@@ -2663,10 +2900,10 @@ function wallView(){
   const {late}=shiftInfo(); const em=cfg().emergency;
   return `<div class="wall">
     <div class="wall-top"><div class="row" style="gap:14px;flex-wrap:nowrap">${logoUrl()?`<img class="wall-logo${LA()}" src="${logoUrl()}" alt="">`:''}<div><h1>${esc(cfg().eventName)}</h1><div class="small muted"><span class="live">مباشر</span> · غرفة العمليات</div></div></div>
-      <div class="row"><span class="wall-clock" data-clock>${new Date().toLocaleTimeString('ar-u-nu-latn',{hour:'2-digit',minute:'2-digit',second:'2-digit'})}</span><button class="btn sm" data-act="tab" data-tab="dash">خروج</button></div></div>
+      <div class="row"><span class="wall-clock" data-clock>${new Date().toLocaleTimeString('ar-u-nu-latn',{hour:'2-digit',minute:'2-digit',second:'2-digit'})}</span><button class="btn sm" data-act="wall-ops">🌴 شاشة العرض</button><button class="btn sm" data-act="tab" data-tab="dash">خروج</button></div></div>
     ${goldBanner()}
     ${tickerHtml()}
-    ${pulseHtml()}
+    <div class="wall-hero">${pulseHtml()}${wallSpot()}</div>
     ${em?.active?`<div class="em-panel" style="margin:0"><b style="font-size:1.4rem">طوارئ: ${EM_T[em.type]}</b><div>${esc(em.msg)}</div></div>`:''}
     <div class="wall-kpis">${kpi(cnt('active'),'على رأس العمل','var(--ok)')}${kpi(cnt('break'),'في استراحة','var(--warn)')}${kpi(cnt('idle'),'لم يحضروا','var(--idle)')}${kpi(alerts.length,'بلاغات مفتوحة','var(--crit)')}${kpi(ms.length,'مهام جارية','var(--accent)')}</div>
     <div class="wall-main">
@@ -2674,6 +2911,7 @@ function wallView(){
         <div class="row" style="justify-content:space-between"><h2>${esc(s.z.name)}</h2><span class="pill ${CROWD[cr].c}">${CROWD[cr].t}</span></div>
         <div class="row" style="align-items:baseline"><span class="big">${s.active.length}</span><span class="muted">/ ${s.need}</span>${s.gap>0?`<span class="pill crit num">ينقص ${s.gap}</span>`:s.gap<0?`<span class="pill ok num">فائض ${-s.gap}</span>`:''}</div>
         <div class="bar ${s.gap>0?(cr>=2?'crit':'warn'):''}"><i style="width:${s.need?Math.min(100,Math.round(s.active.length/s.need*100)):100}%"></i></div>
+        ${s.active.length?`<div class="wz-av">${s.active.slice(0,8).map(v=>avatar(v.id,'av wz-a')).join('')}${s.active.length>8?`<span class="wz-more num">+${s.active.length-8}</span>`:''}</div>`:''}
         <div class="row small muted"><span>${s.onBreak.length} استراحة</span>${e?`<span class="row" style="gap:6px">طاقة ${energyBar(e.avg<1.7?1:e.avg<2.4?2:3)}</span>`:''}${peakSoon(s.z.id)?`<span style="color:var(--crit)">ذروة ${esc(peakSoon(s.z.id).time)}</span>`:''}</div>
       </div>`; }).join('')}</div>
       <aside class="wall-side">
@@ -2961,6 +3199,7 @@ const ACT = {
   'thx-seen': el=>{ lsSet('thxSeen:'+el.dataset.id, thanksOf(el.dataset.id).length); scheduleRender(); },
   'hours-dl': async ()=>{ const data=hoursCsv(); try{ await DL.save({filename:`الساعات-التطوعية-${cfg().eventName||''}.csv`, data:new Blob([data],{type:'text/csv'})}); }catch{ try{ await navigator.clipboard.writeText(data); toast('تم نسخ الملف','ok'); }catch{ toast('تعذر التنزيل','warn'); } } },
   'pay-report': async ()=>{ const q=x=>'"'+String(x??'').replace(/"/g,'""')+'"'; const data='\ufeff'+[['الاسم','أيام الاستحقاق','المستحق','المحوّل','المتبقي','الآيبان','تاريخ التحويل'].map(q).join(','), ...balRows().map(r=>{ const last=Object.values(S.payouts).filter(p=>p.v===r.v.id).sort((a,b)=>b.at-a.at)[0]; return [r.v.name, r.b.okDays, r.b.earned, r.b.paid, r.b.bal, String(r.pi?.iban||'').replace(/\s+/g,''), last?new Date(last.at).toLocaleDateString('en-GB'):''].map(q).join(','); })].join('\n'); try{ await DL.save({filename:`تقرير-البدل-${cfg().eventName||''}.csv`, data:new Blob([data],{type:'text/csv'})}); }catch{ toast('تعذر التنزيل','warn'); } },
+  'wall-ops': ()=>{ UI.wallOps=!UI.wallOps; scheduleRender(); },
   'prof-edit': ()=>{ UI.profEdit=true; scheduleRender(); window.scrollTo(0,0); },
   'prof-cancel': ()=>{ UI.profEdit=false; scheduleRender(); },
   'mini-toggle': el=>{ put('config','main',{...cfg(), mini:{...miniCfg(), enabled:el.checked}}); },
