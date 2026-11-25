@@ -2599,7 +2599,7 @@ function kioskDo(status){
 function portalView(vid){
   if(emActive()) return emergencyScreen(vid);
   if(!profReady()) return `<div class="portal"><div class="empty">جارٍ التحميل…</div></div>`;
-  if(!profOf(vid) || UI.profEdit) return profileForm(vid, !!profOf(vid));
+  if((!profOf(vid) && !RULES_MISS.has('profiles')) || UI.profEdit) return profileForm(vid, !!profOf(vid));
   const v={...S.volunteers[vid], id:vid}; const c=cfg(); const z=zoneById(v.zone); const S0=STATUS[v.status];
   const msgs=Object.values(S.msgs).filter(m=>m.target==='all'||m.target===v.zone).sort((a,b)=>b.at-a.at).slice(0,6);
   const praise=(idx().notesByV[vid]||[]).filter(n=>n.kind==='praise'||n.kind==='award');
@@ -2641,6 +2641,7 @@ function portalView(vid){
       <div class="buddy"><span class="av" style="--zc:${zColor(b.zone)}">${esc(initials(b.name))}</span><div class="grow"><b>${esc(b.name)}</b><div class="small muted">${esc(zName(b.zone))} · <span class="pill ${STATUS[b.status].c}">${STATUS[b.status].t}</span></div></div><div style="text-align:center"><b class="num" style="font-family:var(--font-display);font-size:1.4rem">${i>=0?pr[i].p:0}</b><div class="tiny muted">نقاطكم معاً</div></div></div></section>`; })()}
     ${storyReady(v)?`<button class="story-cta" data-act="story" data-id="${vid}"><span>🎬</span><div class="grow"><b>قصة يومك جاهزة!</b><div class="small">شوف ملخص يومك وانشره ستوري</div></div><span aria-hidden="true" style="font-size:1.4rem">‹</span></button>`:''}
     ${thanksPortal(vid)}
+    ${RULES_MISS.size?`<p class="tiny muted" style="text-align:center;margin:0">رمز تقني للمشرف: ${[...RULES_MISS].join(' · ')}</p>`:''}
     ${payPortal(vid)}
     ${mealVoucher(vid)}
     ${portalMissions(vid)}
@@ -3432,10 +3433,12 @@ function stopListeners(){ PAY_SUB=false; PROF_LOADED=false; UNSUBS.forEach(u=>{ 
 function mergeSecrets(){ if(!AUTH.admin) return; Object.entries(S.volunteers).forEach(([id,v])=>{ const sec=S.secrets[v.code]; if(sec && v.phone!==sec.phone) S.volunteers[id]={...v, phone:sec.phone||''}; }); }
 function startListeners(role){
   const slowT=setTimeout(()=>{ if(!S.ready){ S.slow=true; scheduleRender(); } }, 10000);
-  const onErr = e=>{ clearTimeout(slowT); S.ready=true;
+  const onErrFor = col => e=>{ clearTimeout(slowT); S.ready=true;
+    if(e && e.code==='permission-denied' && role==='vol' && col!=='volunteers'){ console.warn('rules: no read access to', col); RULES_MISS.add(col); scheduleRender(); return; }
     if(e && e.code==='permission-denied' && role==='vol'){ AUTH.volCode=null; toast('انتهت جلستك، سجّل دخولك من جديد','warn'); fbLogout(); }
     else if(e && e.code!=='permission-denied') toast('انقطع الاتصال بالبيانات. أعد فتح الصفحة.','crit');
     scheduleRender(); };
+  const onErr = onErrFor('config');
   UNSUBS.push(DB.doc('config/main').onSnapshot(sn=>{ S.config = sn.exists ? sn.data() : null; clearTimeout(slowT); S.ready=true; S.slow=false; invalidate(); scheduleRender(); }, onErr));
   if(role==='guest') return;
   COLS.forEach(c=>{
@@ -3443,11 +3446,11 @@ function startListeners(role){
     let q=DB.collection(c); if(c==='notes' && role!=='admin') q=q.where('kind','in',['praise','award','box']);
     UNSUBS.push(q.onSnapshot(snap=>{ const o={}; snap.docs.forEach(d=>{ o[d.id]=d.data(); }); S[c]=o; if(c==='volunteers'||c==='secrets') mergeSecrets();
       if(c==='volunteers' && role==='vol' && !PAY_SUB){ const me=findByCode(AUTH.volCode); if(me){ PAY_SUB=true;
-        ['payinfo','payouts','profiles'].forEach(pc=>UNSUBS.push(DB.collection(pc).where('v','==',me.id).onSnapshot(sn=>{ const oo={}; sn.docs.forEach(d=>{ oo[d.id]=d.data(); }); S[pc]=oo; if(pc==='profiles') PROF_LOADED=true; invalidate(); scheduleRender(); }, onErr))); } }
-      invalidate(); scheduleRender(); }, onErr));
+        ['payinfo','payouts','profiles'].forEach(pc=>UNSUBS.push(DB.collection(pc).where('v','==',me.id).onSnapshot(sn=>{ const oo={}; sn.docs.forEach(d=>{ oo[d.id]=d.data(); }); S[pc]=oo; if(pc==='profiles') PROF_LOADED=true; invalidate(); scheduleRender(); }, e=>{ if(pc==='profiles') PROF_LOADED=true; onErrFor(pc)(e); }))); } }
+      invalidate(); scheduleRender(); }, onErrFor(c)));
   });
 }
-let PAY_SUB=false, PROF_LOADED=false;
+let PAY_SUB=false, PROF_LOADED=false; const RULES_MISS=new Set();
 async function fbVolLogin(code, pin){
   code=String(code||'').trim(); pin=String(pin||'').trim();
   if(!S.config) { toast('الفعالية لم تُجهز بعد','warn'); return false; }
@@ -3481,7 +3484,7 @@ async function boot(){
     if(!user){ try{ await firebase.auth().signInAnonymously(); }catch(e){ S.ready=true; S.slow=true; scheduleRender(); } return; }
     if(AUTH.admin){ startListeners('admin'); scheduleRender(); return; }
     if(user.email){ await firebase.auth().signOut(); return; }
-    try{ const sn=await DB.collection('sessions').doc(user.uid).get(); if(sn.exists){ AUTH.volCode=sn.data().code; startListeners('vol'); scheduleRender(); return; } }catch{}
+    try{ const sn=await DB.collection('sessions').doc(user.uid).get(); if(sn.exists){ let stale=false; try{ const cf=await DB.doc('config/main').get(); stale=!cf.exists || (cf.data().createdAt||0) > (sn.data().at||0); }catch{} if(stale){ await sn.ref.delete().catch(()=>{}); } else { AUTH.volCode=sn.data().code; startListeners('vol'); scheduleRender(); return; } } }catch{}
     startListeners('guest'); scheduleRender();
   });
 }
