@@ -16,7 +16,7 @@
   --ink:#24130f;
   --muted:#5a6a73;
   --line:#d8e1e4;
-  --accent:#5A1712;
+  --accent:#4A1620;
   --accent-ink:#ffffff;
   --accent-soft:#f3e3dd;
   --cu:#B4683C;
@@ -491,31 +491,35 @@ td.n{font-variant-numeric:tabular-nums}
 .scanbox{position:relative;border-radius:16px;overflow:hidden;background:#000;aspect-ratio:1;max-width:340px;width:100%;margin:auto}
 .scanbox video{width:100%;height:100%;object-fit:cover;transform:scaleX(-1)}
 .scanbox i{position:absolute;inset:18%;border:3px solid #fff;border-radius:18px;box-shadow:0 0 0 999px #0006}
-/* بطاقة المتطوع: تصميم الأمسية (مقاسات بالـem: 21.25em × 33.8em = 54×86 ملم) */
-.idc{--bc:#5A1712;--cu:#C98A5A;font-size:16px;width:21.25em;height:33.8em;box-sizing:border-box;position:relative;overflow:hidden;border-radius:1.4em;color:#fff;font-family:var(--font-body);display:grid;grid-template-rows:auto auto 1fr;break-inside:avoid;
-  background:radial-gradient(120% 70% at 50% 35%, color-mix(in srgb,var(--bc) 80%,#c0412f) 0%, var(--bc) 45%, color-mix(in srgb,var(--bc) 45%,#000) 100%);text-align:center}
-.modal .idc{font-size:min(14px,3.7vw);box-shadow:0 1.2em 2.6em #0004}
-.idc-bf{position:absolute;fill:var(--cu);width:2.9em;opacity:.9}
-.idc-bf svg{width:100%;display:block}
-.idc-bf.b1{right:2.1em;top:12.3em;transform:rotate(18deg)}
-.idc-bf.b2{left:2.6em;top:15.6em;width:1.9em;opacity:.6;transform:rotate(-24deg)}
-.idc-top{display:flex;justify-content:space-between;align-items:center;padding:1.25em 1.4em 0;position:relative;gap:.6em}
-.idc-logo{height:2.75em;width:auto;max-width:8em;object-fit:contain}
-.idc-chip{font-family:var(--font-display);font-weight:700;font-size:.82em;color:#F3DFA6;background:#ffffff14;border:1px solid color-mix(in srgb,var(--cu) 55%,transparent);padding:.35em .9em;border-radius:99em;white-space:nowrap}
-.idc-mid{display:grid;justify-items:center;gap:.25em;padding-top:1.6em;position:relative}
-.idc-ph{width:8.5em;height:8.5em;border-radius:50%;padding:.28em;background:conic-gradient(from 200deg,#f3d2b0,#B4683C,#f3d2b0,var(--cu),#f3d2b0)}
-.idc-ph>div{width:100%;height:100%;border-radius:50%;overflow:hidden;border:.25em solid color-mix(in srgb,var(--bc) 70%,#000);background:#eadccd;display:grid;place-items:center}
+/* بطاقة المتطوع: بهوية بطاقة الفعالية الرسمية (21.25em × 33.8em = 54×86 ملم) */
+.idc{--cu:#d9b38c;font-size:16px;width:21.25em;height:33.8em;box-sizing:border-box;position:relative;overflow:hidden;border-radius:1.1em;color:#fff;font-family:var(--font-body);display:flex;flex-direction:column;align-items:center;text-align:center;break-inside:avoid;
+  background:linear-gradient(118deg,transparent 0 30%,rgba(255,235,225,.10) 42%,rgba(255,235,225,.03) 52%,transparent 60%),linear-gradient(118deg,transparent 0 58%,rgba(255,235,225,.07) 66%,transparent 74%),radial-gradient(120% 80% at 80% 10%,#5a1d27 0%,#3a1018 45%,#24080d 100%)}
+.modal .idc{font-size:min(14px,3.7vw);box-shadow:0 1.2em 2.6em #0005}
+.idc-hole{position:absolute;top:.9em;left:50%;translate:-50% 0;width:4em;height:.6em;border-radius:1em;background:rgba(0,0,0,.35);box-shadow:inset 0 1px 2px #0008}
+.idc-logos{margin-top:2.2em;height:2.4em;display:flex;justify-content:center;align-items:center;gap:.8em}
+.idc-logo{height:2.4em;width:auto;max-width:8em;object-fit:contain;opacity:.92}
+.idc-ev{display:flex;align-items:center;gap:.55em;margin-top:.9em;direction:rtl}
+.idc-em{width:2.6em;height:2.6em;color:#f3e6dc;display:block}
+.idc-em svg,.idc-mini svg{width:100%;height:100%;display:block}
+.idc-ev div{display:grid;text-align:start;line-height:1.15}
+.idc-ev b{font-family:var(--font-display);font-weight:600;font-size:1.25em;color:#f3e6dc}
+.idc-ev span{font-size:.5em;letter-spacing:.35em;color:#d9c3b6;direction:ltr;text-align:right}
+.idc-ph{width:7.4em;height:7.4em;border-radius:50%;padding:.18em;margin-top:1.1em;background:linear-gradient(135deg,#f3dcc4,#a86c4e,#f3dcc4)}
+.idc-ph>div{width:100%;height:100%;border-radius:50%;overflow:hidden;background:#e9ddd4;display:grid;place-items:center;border:.2em solid #2b0b10}
 .idc-ph img{width:100%;height:100%;object-fit:cover}
-.idc-ph span{font-family:var(--font-display);font-weight:700;font-size:2.6em;color:var(--bc)}
-.idc-name{font-family:var(--font-display);font-weight:700;font-size:1.6em;margin-top:.5em;line-height:1.25;padding:0 .6em;text-shadow:0 .1em .5em #0004}
-.idc-role{font-size:.86em;opacity:.85;padding:0 1em}
-.idc-panel{align-self:end;margin:0 1em 1em;background:#FBF5EC;color:#24130f;border-radius:1.1em;display:flex;align-items:center;gap:.75em;padding:.6em .8em;position:relative;box-shadow:0 .6em 1.5em #0004;direction:rtl}
-.idc-panel .qr{width:5.8em;height:5.8em;flex:none;order:2}
-.idc-t{display:grid;gap:.12em;flex:1;text-align:start}
-.idc-tag{font-family:var(--font-display);font-size:1.22em;color:var(--bc)}
-.idc-num{font-size:1em;color:#7a6a62;font-weight:600}
-.idc-msg{font-family:var(--font-display);font-weight:600;font-size:.86em;color:#B4683C}
-.idc-hint{font-size:.66em;color:#7a6a62}
+.idc-ph span{font-family:var(--font-display);font-weight:700;font-size:2.4em;color:#4a1620}
+.idc-name{font-family:var(--font-display);font-weight:700;font-size:1.3em;margin-top:.45em;line-height:1.25;padding:0 .8em}
+.idc-role{font-size:.74em;color:#d9c3b6;margin-top:.1em}
+.idc-big{font-family:var(--font-display);font-weight:700;font-size:2.35em;line-height:1.05;margin-top:.35em;color:#fff;letter-spacing:-.01em}
+.idc-foot{display:flex;align-items:center;gap:.5em;width:78%;margin-top:.55em}
+.idc-foot i{flex:1;height:1px;background:linear-gradient(90deg,transparent,#d9b38c88,transparent)}
+.idc-mini{width:.95em;height:.95em;color:#f3e6dc}
+.idc-qr{margin-top:auto;margin-bottom:.9em;display:flex;align-items:center;gap:.6em;background:rgba(255,255,255,.06);border:1px solid rgba(217,179,140,.35);border-radius:.8em;padding:.4em .55em;direction:rtl}
+.idc-qr .qr{width:4.4em;height:4.4em;border-radius:.35em;flex:none;order:2}
+.idc-qr div{display:grid;text-align:start;gap:.05em}
+.idc-qr b{font-size:.95em;color:#f3e6dc}
+.idc-qr span{font-family:var(--font-display);font-weight:600;font-size:.78em;color:#d9b38c}
+.idc-qr small{font-size:.58em;color:#cdb5a8}
 #print-root{display:none}
 @media print{
   @page{size:A4;margin:8mm}
@@ -698,6 +702,36 @@ body.printing #print-root{display:block}
 
 /* الصور الشخصية: نعرض الوجه (أعلى الصورة) بدل القص من النص */
 .av.ph img,.idc-ph img,#ph-prev img,.sf-ph img{object-position:50% 22%}
+
+/* ===== ثيم موحّد بهوية بطاقة الفعالية ===== */
+:root{--plum:#2b0b10;--plum-2:#4A1620;--cu:#C9A27E;--cream:#f3e6dc;
+  --sheen:linear-gradient(118deg,transparent 0 30%,rgba(255,235,225,.10) 42%,rgba(255,235,225,.03) 52%,transparent 60%),linear-gradient(118deg,transparent 0 58%,rgba(255,235,225,.07) 66%,transparent 74%),radial-gradient(120% 80% at 80% 10%,#5a1d27 0%,#3a1018 45%,#24080d 100%)}
+.side{background:var(--sheen)!important;border:0!important;--ink:#f3e6dc;--muted:#d4bdb1;--surface-2:rgba(255,255,255,.07);--line:rgba(201,162,126,.28);--accent:#e7c9a8;--accent-soft:rgba(231,201,168,.16);color:var(--ink)}
+.side .brand b{color:#fff}
+.side .btn{background:rgba(255,255,255,.06);color:#f3e6dc;border-color:rgba(201,162,126,.35)}
+.top{background:color-mix(in srgb,var(--surface) 92%,transparent);backdrop-filter:blur(8px)}
+.top h1,.top .brand b{color:var(--plum-2)}
+.vhero{background:var(--sheen)!important;color:#fff!important;position:relative;overflow:hidden;border:1px solid rgba(201,162,126,.35)}
+.vhero .lbl{color:#d9c3b6;opacity:1}
+.vhero .pill{background:rgba(255,255,255,.12);border:1px solid rgba(201,162,126,.35)}
+.vhero .zname{color:#fff}
+.hero h1{display:flex;align-items:center;gap:.4em;color:var(--plum-2)}
+.hero-em{width:1.2em;height:1.2em;color:var(--cu);display:inline-block;flex:none}
+.hero-em svg{width:100%;height:100%;display:block}
+.door .ic{background:var(--sheen);color:#f3e6dc}
+.card-h h2,.card-h h3,.section-title h2{color:var(--plum-2)}
+.btn.primary{background:linear-gradient(135deg,#5a1d27,#3a1018);border-color:#3a1018;color:#fff}
+.btn.primary:hover{filter:brightness(1.12)}
+.kpi{border-color:color-mix(in srgb,var(--cu) 30%,var(--line))}
+.mini-card,.thx-new{border-color:var(--cu)!important;box-shadow:0 0 0 3px color-mix(in srgb,var(--cu) 22%,transparent)!important}
+.thx{background:var(--sheen)!important}
+.thx-card{background:#fffaf5;border-color:var(--cu)}
+.story-cta{background:var(--sheen)!important;border:1px solid var(--cu)!important;box-shadow:0 8px 24px #3a101855!important}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]) .top h1,:root:not([data-theme="light"]) .card-h h2,:root:not([data-theme="light"]) .card-h h3,:root:not([data-theme="light"]) .section-title h2,:root:not([data-theme="light"]) .hero h1{color:var(--cream)} }
+:root[data-theme="dark"] .top h1,:root[data-theme="dark"] .card-h h2,:root[data-theme="dark"] .card-h h3,:root[data-theme="dark"] .section-title h2,:root[data-theme="dark"] .hero h1{color:var(--cream)}
+/* شاشة العرض بنفس خلفية البطاقة */
+body:has(.wall.nb) #wall-fx{background:var(--sheen)!important}
+body:has(.wall.nb) #wall-fx .fb{fill:#d9b38c!important}
 </style>
 </head>
 <body>
@@ -1184,15 +1218,19 @@ function scanStop(){ if(SCAN){ SCAN.on=false; try{ SCAN.stream.getTracks().forEa
 /* ---------- بطاقة المتطوع ---------- */
 const BFLY='<svg viewBox="0 0 64 52"><path d="M31 24C27 10 16 1 8 3 1 5 2 15 8 20c5 4 14 5 23 4z"/><path d="M33 24C37 10 48 1 56 3c7 2 6 12 0 17-5 4-14 5-23 4z"/><path d="M31 26c-9 0-17 3-18 10-1 6 5 10 10 7 4-3 7-10 8-17z" opacity=".85"/><path d="M33 26c9 0 17 3 18 10 1 6-5 10-10 7-4-3-7-10-8-17z" opacity=".85"/><rect x="31" y="16" width="2" height="22" rx="1"/></svg>';
 const volWord = vid => ({f:'متطوعة', m:'متطوع'})[profOf(vid)?.gender] || 'فريق التطوع';
+const EMBLEM='<svg viewBox="0 0 100 100" aria-hidden="true"><g fill="currentColor">'+Array.from({length:8},(_,i)=>`<path transform="rotate(${i*45} 50 50)" d="M50 8 C57 20 57 30 50 38 C43 30 43 20 50 8z"/>`).join('')+'<circle cx="50" cy="50" r="7" fill="none" stroke="currentColor" stroke-width="3"/></g><path d="M22 30v-8h8M78 30v-8h-8M22 70v8h8M78 70v8h-8" fill="none" stroke="currentColor" stroke-width="1.6" opacity=".7"/></svg>';
 function idCard(vid){
   const v=S.volunteers[vid]; if(!v) return ''; const c=cfg(); const p=profOf(vid); const z=zoneById(v.zone);
-  return `<div class="idc" style="--bc:${esc(brandCfg().color||BRAND_DEFAULT)}">
-    <span class="idc-bf b1">${BFLY}</span><span class="idc-bf b2">${BFLY}</span>
-    <div class="idc-top">${logoUrl()?`<img class="idc-logo" src="${logoUrl()}" alt="">`:'<span></span>'}<span class="idc-chip">${esc(c.eventName||'')}</span></div>
-    <div class="idc-mid"><div class="idc-ph"><div>${p?.photo?`<img src="${esc(p.photo)}" alt="">`:`<span>${esc(initials(v.name))}</span>`}</div></div>
-      <div class="idc-name">${esc(v.name)}</div>
-      <div class="idc-role">${esc(v.role||'متطوع')}${z?` · ${esc(z.name)}`:''}</div></div>
-    <div class="idc-panel">${qrSvg(thanksUrl(v))}<div class="idc-t"><b class="idc-tag">${volWord(vid)}</b><b class="idc-num num">#${esc(v.code)}</b><span class="idc-msg">سعدنا بخدمتك</span><span class="idc-hint">امسح الرمز لتقييم الخدمة</span></div></div>
+  return `<div class="idc">
+    <span class="idc-hole"></span>
+    <div class="idc-logos">${logoUrl()?`<img class="idc-logo" src="${logoUrl()}" alt="">`:''}</div>
+    <div class="idc-ev"><span class="idc-em">${EMBLEM}</span><div><b>${esc(c.eventName||'')}</b><span>EVENT ${new Date(c.eventDate||now()).getFullYear()}</span></div></div>
+    <div class="idc-ph"><div>${p?.photo?`<img src="${esc(p.photo)}" alt="">`:`<span>${esc(initials(v.name))}</span>`}</div></div>
+    <div class="idc-name">${esc(v.name)}</div>
+    <div class="idc-role">${z?esc(z.name):esc(v.role||'')}</div>
+    <div class="idc-big">${volWord(vid)==='فريق التطوع'?'فريق<br>التطوع':volWord(vid)}</div>
+    <div class="idc-foot"><i></i><span class="idc-mini">${EMBLEM}</span><i></i></div>
+    <div class="idc-qr">${qrSvg(thanksUrl(v))}<div><b class="num">#${esc(v.code)}</b><span>سعدنا بخدمتك</span><small>امسح الرمز لتقييم الخدمة</small></div></div>
   </div>`;
 }
 function idModal(vid){
@@ -1920,9 +1958,9 @@ function payInfoModal(){
 }
 
 /* ---------- الهوية البصرية ---------- */
-const BRAND_COLORS=['#5A1712','#0d5a70','#1d4ed8','#6d28d9','#be185d','#b91c1c','#c2410c','#a16207','#15803d','#0f766e','#334155'];
-const BRAND_DEFAULT='#5A1712';
-const brandCfg = () => ({color:BRAND_DEFAULT, ...(cfg()?.brand||{})});
+const BRAND_COLORS=['#4A1620','#5A1712','#0d5a70','#1d4ed8','#6d28d9','#be185d','#b91c1c','#c2410c','#a16207','#15803d','#0f766e','#334155'];
+const BRAND_DEFAULT='#4A1620';
+const brandCfg = () => { const b={color:BRAND_DEFAULT, ...(cfg()?.brand||{})}; if(b.color==='#5A1712') b.color=BRAND_DEFAULT; return b; };
 const logoUrl = () => brandCfg().logo || '';
 function hexLum(h){ const m=String(h).replace('#',''); if(m.length!==6) return 0.2; const [r,g,b]=[0,2,4].map(i=>{ let c=parseInt(m.slice(i,i+2),16)/255; return c<=0.03928?c/12.92:Math.pow((c+0.055)/1.055,2.4); }); return 0.2126*r+0.7152*g+0.0722*b; }
 let BRAND_SIG='';
@@ -2112,7 +2150,7 @@ function landingView(){
     <div class="hero">
       ${logoUrl()?`<img class="hero-logo${LA()}" src="${logoUrl()}" alt="شعار ${esc(c.eventName||'')}">`:''}
       <span class="pill accent nodot" style="justify-self:start">${c.eventDate ? esc(fmtDay(new Date(c.eventDate).getTime())) : 'منصة إدارة المتطوعين'}</span>
-      <h1>${esc(c.eventName||'منصة إدارة المتطوعين')}</h1>
+      <h1><span class="hero-em">${EMBLEM}</span>${esc(c.eventName||'منصة إدارة المتطوعين')}</h1>
       <p class="muted">${S.config?'اختر طريقة الدخول':(S.mode==='db' && (AUTH.err||S.slow))?'تعذّر تحميل بيانات الفعالية. تأكد من الإنترنت وأعد المحاولة، أو افتح الرابط من متصفح Safari أو Chrome.':'الفعالية لم تُجهز بعد. ادخل كمشرف لإعدادها.'}</p>
       ${!S.config && S.mode==='db'?`<div class="row"><button class="btn primary" onclick="location.reload()">إعادة المحاولة</button>${AUTH.err?`<span class="tiny muted" dir="ltr">${esc(AUTH.err)}</span>`:''}</div>`:''}
     </div>
