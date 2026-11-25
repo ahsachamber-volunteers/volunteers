@@ -2252,7 +2252,7 @@ function peopleView(){
   list.sort((a,b)=>a.name.localeCompare(b.name,'ar'));
   const counts={all:vols().length}; Object.keys(STATUS).forEach(s=>counts[s]=vols().filter(v=>v.status===s).length);
   return `<div class="section-title"><h2>المتطوعون <span class="muted num small">(${list.length})</span></h2>
-    <div class="row"><button class="btn sm" data-act="reset-missing">🔑 رموز جديدة لمن لم يدخل</button><button class="btn sm" data-act="creds-file">📲 إرسال بيانات الدخول</button><button class="btn sm" data-act="print-open">${ic('idcard')} طباعة البطاقات</button><button class="btn sm" data-act="import">استيراد قائمة</button><button class="btn sm primary" data-act="add-vol">${ic('plus')} إضافة متطوع</button></div></div>
+    <div class="row"><button class="btn sm" data-act="fix-phones">📞 تصحيح الجوالات</button><button class="btn sm" data-act="reset-missing">🔑 رموز جديدة لمن لم يدخل</button><button class="btn sm" data-act="creds-file">📲 إرسال بيانات الدخول</button><button class="btn sm" data-act="print-open">${ic('idcard')} طباعة البطاقات</button><button class="btn sm" data-act="import">استيراد قائمة</button><button class="btn sm primary" data-act="add-vol">${ic('plus')} إضافة متطوع</button></div></div>
   <div class="card card-b stack" style="gap:10px">
     <input class="input" id="people-q" data-input="q" placeholder="ابحث بالاسم أو الرقم أو الجوال أو الدور" value="${esc(UI.q)}">
     <div class="row">
@@ -3098,7 +3098,7 @@ ${appUrl()}
 
 لا تشارك رمزك مع أحد 🔒`; }
 function credsModal(list){
-  const c=cfg(); CREDS_LAST=list;
+  const c=cfg(); list=list.map(x=>({...x, phone:(x.id&&S.volunteers[x.id]?.phone)||x.phone})); CREDS_LAST=list;
   const text = list.map(x=>`${x.name}: الرقم ${x.code} - الرمز ${x.pin}`).join('\n');
   openModal(`<div class="modal-h"><h2>بيانات دخول المتطوعين</h2><button class="btn ghost sm" data-act="close-modal" aria-label="إغلاق">${ic('x')}</button></div>
   <div class="modal-b">
@@ -3191,6 +3191,9 @@ const ACT = {
   'meal-use': ()=>mealStampModal(),
   'pay-toggle': el=>{ const c=cfg(); put('config','main',{...c, allowance:{amount:20, minHours:6, ...(c.allowance||{}), enabled:el.checked}}); },
   'payinfo-edit': ()=>payInfoModal(),
+  'fix-phones': ()=>openModal(`<div class="modal-h"><h2>📞 تصحيح جوالات المتطوعين</h2><button class="btn ghost sm" data-act="close-modal" aria-label="إغلاق">${ic('x')}</button></div>
+    <form data-form="fix-phones"><div class="modal-b"><p class="small muted" style="margin:0">الصقي نفس قائمة المتطوعين الأصلية (الاسم، الجوال). المنصة تطابق كل اسم وتصحح جواله إذا كان غلط، وتشيل علامة ✓ عن اللي تغير جوالهم عشان تعيدين الإرسال لهم.</p>
+    <textarea class="input" name="text" style="min-height:180px" placeholder="سعد العتيبي، 0551234567"></textarea></div><div class="modal-f"><button class="btn primary">تصحيح</button><button type="button" class="btn" data-act="close-modal">إلغاء</button></div></form>`),
   'reset-missing': async ()=>{
     const groups={}; vols().forEach(v=>{ (groups[String(v.code)] ||= []).push(v); });
     const dupe=Object.values(groups).filter(g=>g.length>1);
@@ -3333,6 +3336,15 @@ const FORMS = {
     if(id){ const v=S.volunteers[id]; const zone=fd.get('zone'); const sec=secretOf(v); if(sec && (fd.get('phone')||'')!==(sec.phone||'')) put('secrets', v.code, {...sec, phone:(fd.get('phone')||'').trim()}); if(zone!==v.zone) moveVol(id,zone); put('volunteers',id,{...S.volunteers[id],name,phone:fd.get('phone'),role:fd.get('role'),zone,shiftStart:fd.get('shiftStart')||'',shiftEnd:fd.get('shiftEnd')||'',reserve:!!fd.get('reserve')}); closeModal(); toast('تم الحفظ','ok'); }
     else { const pin=(fd.get('pin')||'').trim(); if(pin && !/^\d{6}$/.test(pin)) return toast('الرمز لازم 6 أرقام','warn'); const r=createVolunteer({name,phone:fd.get('phone'),role:fd.get('role'),zone:fd.get('zone'),pin:pin||null,shiftStart:fd.get('shiftStart')||'',shiftEnd:fd.get('shiftEnd')||'',reserve:!!fd.get('reserve')}); credsModal([r]); }
   },
+  'fix-phones': async f=>{
+    const norm=t=>String(t||'').replace(/[\u200e\u200f\u202a-\u202e]/g,'').replace(/\s+/g,' ').trim();
+    const lines=String(new FormData(f).get('text')||'').split(/\n+/).map(l=>l.trim()).filter(Boolean);
+    const changed=[], missing=[];
+    for(const l of lines){ const parts=l.split(/[,،\t;|]+/).map(norm).filter(Boolean); const phone=(parts.find(x=>/^\+?\d[\d\s-]{6,}$/.test(x))||'').replace(/[\s-]/g,''); const name=parts.find(x=>!/^\+?\d[\d\s-]{6,}$/.test(x)); if(!name||!phone) continue;
+      const v=vols().find(x=>norm(x.name)===name); if(!v){ missing.push(name); continue; }
+      const sec=secretOf(v)||{vid:v.id}; if(sec.vid!==v.id) continue;
+      if((sec.phone||'')!==phone){ put('secrets', String(v.code), {...sec, phone}); const cur=S.volunteers[v.id]; put('volunteers', v.id, (({credSent,...r})=>r)({...cur, phone})); changed.push(v.name); if(DB) await sleep(40); } }
+    closeModal(); openModal(`<div class="modal-h"><h2>تم التصحيح</h2><button class="btn ghost sm" data-act="close-modal" aria-label="إغلاق">${ic('x')}</button></div><div class="modal-b stack"><div>تصحّح جوال <b class="num">${changed.length}</b> متطوع${changed.length?`:<div class="small">${changed.map(esc).join('، ')}</div>`:''}</div>${missing.length?`<div class="small muted">ما لقيت هالأسماء: ${missing.map(esc).join('، ')}</div>`:''}<p class="small muted" style="margin:0">الحين افتحي <b>📲 إرسال بيانات الدخول</b> واختاري ملف البيانات الجديد، وأرسلي للي ما عليهم ✓.</p></div><div class="modal-f"><button class="btn primary" data-act="close-modal">تم</button></div>`); },
   import: async f=>{
     const lines=(new FormData(f).get('text')||'').split(/\n+/).map(l=>l.trim()).filter(Boolean);
     if(!lines.length) return;
