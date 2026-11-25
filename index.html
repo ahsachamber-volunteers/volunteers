@@ -673,6 +673,21 @@ body:has(.wall.nb) #wall-fx .glow{display:none}
 .nb-stripe{height:14px;margin:0 -56px;display:grid;grid-auto-flow:column;grid-auto-columns:1fr}
 @media (max-width:900px){.nb-mid{grid-template-columns:1fr}.nb-art{height:40vh}.nb-top-bar{grid-template-columns:1fr}.nb-clock{justify-self:start}}
 @media (prefers-reduced-motion:reduce){.palm *{animation:none!important}}
+
+/* سيلفي الحضور */
+.selfie-box{position:relative;width:min(280px,72vw);aspect-ratio:1;border-radius:50%;overflow:hidden;background:#000;box-shadow:0 0 0 4px var(--accent)}
+.selfie-box video,.selfie-box img{width:100%;height:100%;object-fit:cover;transform:scaleX(-1)}
+.sf-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;padding:14px 16px}
+.sf-item{display:grid;justify-items:center;gap:4px;background:none;border:1px solid var(--line);border-radius:12px;padding:10px 6px;cursor:pointer;font:inherit;color:inherit;text-align:center}
+.sf-item.warn{border-color:var(--warn);background:var(--warn-soft)}
+.sf-item b{font-size:.85rem}
+.sf-pair{display:flex;gap:6px}
+.sf-ph{width:58px;height:58px;border-radius:50%;overflow:hidden;background:var(--surface-2);display:grid;place-items:center;border:2px solid var(--line)}
+.sf-ph.live{border-color:var(--accent)}
+.sf-ph img{width:100%;height:100%;object-fit:cover}
+.sf-ph i{font-style:normal;font-size:.6rem;color:var(--muted);padding:2px;text-align:center}
+.sf-drawer{display:flex;gap:12px;align-items:center;border:1px solid var(--line);border-radius:12px;padding:10px}
+.sf-drawer img{width:90px;height:90px;border-radius:50%;object-fit:cover}
 </style>
 </head>
 <body>
@@ -857,8 +872,8 @@ function waLink(phone, text){ let p=String(phone||'').replace(/\D/g,''); if(p.st
 function stars(r){ if(!r) return '<span class="muted tiny">—</span>'; const f=Math.round(r); return `<span class="stars" aria-label="تقييم ${r.toFixed(1)} من 5">${'★'.repeat(f)}<span class="off">${'★'.repeat(5-f)}</span></span>`; }
 
 /* ============ الحالة والتخزين ============ */
-const COLS = ['volunteers','logs','notes','alerts','msgs','missions','safety','handover','lost','legend','secrets','meals','payinfo','payouts','profiles','thanks'];
-const S = { config:null, volunteers:{}, logs:{}, notes:{}, alerts:{}, msgs:{}, missions:{}, safety:{}, handover:{}, lost:{}, legend:{}, secrets:{}, meals:{}, payinfo:{}, payouts:{}, profiles:{}, thanks:{}, ready:false, mode:'loading', readonly:false, slow:false };
+const COLS = ['volunteers','logs','notes','alerts','msgs','missions','safety','handover','lost','legend','secrets','meals','payinfo','payouts','profiles','thanks','selfies'];
+const S = { config:null, volunteers:{}, logs:{}, notes:{}, alerts:{}, msgs:{}, missions:{}, safety:{}, handover:{}, lost:{}, legend:{}, secrets:{}, meals:{}, payinfo:{}, payouts:{}, profiles:{}, thanks:{}, selfies:{}, ready:false, mode:'loading', readonly:false, slow:false };
 const UI = { payDay:'', meal:{pin:''}, q:'', fStatus:'all', fZone:'all', sel:new Set(), hideOut:true, drawer:null, sort:'hours', kiosk:{step:'code', code:'', pin:'', vid:null, msg:null}, noteKind:'praise', noteStars:0 };
 let DB = null, USER = null, SAMPLE = null, TTS = null, DICT = null, DL = null;
 const LSKEY = 'vp-data-v1', SESKEY = 'vp-session-v1';
@@ -1432,6 +1447,34 @@ function healthBlock(vid){
     ${row('مقاس التيشيرت', esc(p.shirt||''))}
     <div class="hrow em"><span class="muted">الطوارئ</span><b>${esc(p.emName||'')} (${esc(p.emRel||'')})</b>${p.emPhone?`<a class="btn sm ok" href="tel:${esc(String(p.emPhone).replace(/[^\d+]/g,''))}">${ic('phone')} اتصال <span class="num" dir="ltr">${esc(p.emPhone)}</span></a>`:''}</div>
   </div>`;
+}
+/* ---------- سيلفي الحضور ---------- */
+const selfieOn = () => cfg().selfie!==false;
+let SELFIE=null;
+function selfieStep(vid){
+  return new Promise(resolve=>{
+    SELFIE={resolve, vid, stream:null};
+    openModal(`<div class="modal-h"><h2>📸 سيلفي الحضور</h2><button class="btn ghost sm" data-act="selfie-cancel" aria-label="إلغاء">${ic('x')}</button></div>
+    <div class="modal-b" style="justify-items:center;gap:12px"><div class="selfie-box"><video id="sf-v" playsinline muted autoplay></video><img id="sf-img" alt="" hidden><i></i></div>
+    <p class="small muted" style="margin:0;text-align:center" id="sf-msg">خلّ وجهك واضح داخل الدائرة، وابتسم 😊<br><span class="tiny">التصوير إلزامي لتسجيل الحضور</span></p></div>
+    <div class="modal-f"><button class="btn primary lg" data-act="selfie-snap" id="sf-snap" disabled>📸 صوّر وسجّل حضوري</button></div>`);
+    navigator.mediaDevices?.getUserMedia({video:{facingMode:'user', width:{ideal:640}}, audio:false}).then(st=>{ if(!SELFIE){ st.getTracks().forEach(t=>t.stop()); return; } SELFIE.stream=st; const v=$('#sf-v'); if(v){ v.srcObject=st; v.play().catch(()=>{}); } const b=$('#sf-snap'); if(b) b.disabled=false; })
+      .catch(()=>{ const m=$('#sf-msg'); if(m) m.innerHTML='ما قدرنا نفتح الكاميرا. اسمح للمتصفح باستخدام الكاميرا من الإعدادات وحاول مرة ثانية، أو سجّل حضورك عند المشرف في المدخل.'; });
+  });
+}
+function selfieStop(){ if(SELFIE?.stream){ try{ SELFIE.stream.getTracks().forEach(t=>t.stop()); }catch{} } }
+function selfieDone(val){ const s=SELFIE; selfieStop(); SELFIE=null; closeModal(); s?.resolve(val); }
+async function selfieSave(vid, img, reason){ const day=dayKey(); return put('selfies', `${vid}_${day}`, {v:vid, day, at:now(), img:img||'', reason:reason||''}); }
+async function withSelfie(vid){ if(!selfieOn()) return true; const r=await selfieStep(vid); if(!r) return false; await selfieSave(vid, r.img, r.reason); return true; }
+function selfieCard(){
+  if(!selfieOn()) return '';
+  const day=dayKey(); const list=Object.values(S.selfies||{}).filter(x=>x.day===day).sort((a,b)=>b.at-a.at);
+  if(!list.length) return '';
+  const flagged=list.filter(x=>!x.img || !profOf(x.v)?.photo).length;
+  return `<section class="card"><div class="card-h"><h2>📸 سيلفي الحضور اليوم</h2><span class="tiny muted num">${list.length} حضور${flagged?` · <b style="color:var(--warn)">${flagged} يحتاج نظرة</b>`:''}</span></div>
+    <div class="sf-grid">${list.map(x=>{ const v=S.volunteers[x.v]; const p=profOf(x.v); const warn=!x.img||!p?.photo; return `<button class="sf-item ${warn?'warn':''}" data-act="open-vol" data-id="${x.v}" title="${esc(v?.name||'')}">
+      <div class="sf-pair"><span class="sf-ph">${p?.photo?`<img src="${esc(p.photo)}" alt="الصورة الشخصية">`:'<i>بدون صورة</i>'}</span><span class="sf-ph live">${x.img?`<img src="${esc(x.img)}" alt="سيلفي الحضور">`:'<i>ما صوّر</i>'}</span></div>
+      <b>${esc(v?.name||'')}</b><span class="tiny muted num">${fmtTime(x.at)}${!x.img?' · ⚠️ بدون سيلفي':!p?.photo?' · ⚠️ ما رفع صورته':''}</span></button>`; }).join('')}</div></section>`;
 }
 /* ---------- الاستراحة القصيرة الدورية ---------- */
 const miniCfg = () => ({enabled:true, every:60, per:1, min:7, ...(cfg().mini||{})});
@@ -2169,6 +2212,7 @@ function dashView(){
   ${tickerHtml()}
   ${lostCard()}
   ${miniCard()}
+  ${selfieCard()}
   ${payCard()}
   ${mealCard()}
   ${shiftsCard()}
@@ -2252,7 +2296,7 @@ function peopleView(){
   list.sort((a,b)=>a.name.localeCompare(b.name,'ar'));
   const counts={all:vols().length}; Object.keys(STATUS).forEach(s=>counts[s]=vols().filter(v=>v.status===s).length);
   return `<div class="section-title"><h2>المتطوعون <span class="muted num small">(${list.length})</span></h2>
-    <div class="row"><button class="btn sm" data-act="fix-phones">📞 تصحيح الجوالات</button><button class="btn sm" data-act="reset-missing">🔑 رموز للي ما وصلتهم رسالة</button><button class="btn sm" data-act="creds-file">📲 إرسال بيانات الدخول</button><button class="btn sm" data-act="print-open">${ic('idcard')} طباعة البطاقات</button><button class="btn sm" data-act="import">استيراد قائمة</button><button class="btn sm primary" data-act="add-vol">${ic('plus')} إضافة متطوع</button></div></div>
+    <div class="row"><button class="btn sm" data-act="fix-phones">📞 إصلاح الجوالات والرموز</button><button class="btn sm" data-act="reset-missing">🔑 رموز للي ما وصلتهم رسالة</button><button class="btn sm" data-act="creds-file">📲 إرسال بيانات الدخول</button><button class="btn sm" data-act="print-open">${ic('idcard')} طباعة البطاقات</button><button class="btn sm" data-act="import">استيراد قائمة</button><button class="btn sm primary" data-act="add-vol">${ic('plus')} إضافة متطوع</button></div></div>
   <div class="card card-b stack" style="gap:10px">
     <input class="input" id="people-q" data-input="q" placeholder="ابحث بالاسم أو الرقم أو الجوال أو الدور" value="${esc(UI.q)}">
     <div class="row">
@@ -2300,6 +2344,7 @@ function renderDrawer(full){
       <div><b>${fmtDur(b.ms)}</b><span>مدة الاستراحات</span></div>
       <div><b>${rating(vid)?rating(vid).toFixed(1):'—'}</b><span>التقييم</span></div>
     </div>
+    ${(()=>{ const sf=S.selfies?.[vid+'_'+dayKey()]; return sf?`<div class="sf-drawer"><span class="tiny muted">سيلفي حضور اليوم ${fmtTime(sf.at)}</span>${sf.img?`<img src="${esc(sf.img)}" alt="سيلفي الحضور">`:'<b style="color:var(--warn)">⚠️ سجّل بدون سيلفي</b>'}</div>`:''; })()}
     ${healthBlock(vid)}
     ${(()=>{ const g=gami(vid); return `<div class="card card-b stack" style="gap:10px">
       <div class="row" style="justify-content:space-between"><div class="row"><b class="num" style="font-family:var(--font-display);font-size:1.5rem">${g.p}</b><span class="muted small">نقطة</span>${levelPill(g.level)}${flameHtml(g.streak)}</div><button class="btn sm primary" data-act="award" data-id="${vid}">${ic('gift')} منح مكافأة</button></div>
@@ -2490,6 +2535,7 @@ function settingsView(){
     <div class="field"><label for="c-fat">تنبيه الإرهاق بعد عمل متواصل (ساعات)</label><input class="input num" id="c-fat" type="number" min="1" max="12" step="0.5" data-cfg="fatigueHours" data-num value="${c.fatigueHours||3}"></div>
   </div>
   <div class="card-b stack" style="gap:10px;border-top:1px solid var(--line)">
+    <label class="row"><input type="checkbox" data-act="selfie-toggle" ${selfieOn()?'checked':''}> <b>📸 سيلفي الحضور</b> <span class="small muted">المتطوع يصوّر وجهه وقت تسجيل الحضور، وتطلع لك الصورة جنب صورته الشخصية</span></label>
     <label class="row"><input type="checkbox" data-act="mini-toggle" ${miniCfg().enabled?'checked':''}> <b>☕ الاستراحة القصيرة الدورية</b></label>
     <p class="small muted" style="margin:0">كل فترة تقترح عليك المنصة من كل زون شخص أو اثنين ياخذون استراحة قصيرة. ما تنخصم من رصيد الاستراحة، وتنحسب من ساعات العمل. الزونات الحرجة وقت الذروة والقادة مستثنين.</p>
     <div class="grid2">
@@ -3053,7 +3099,7 @@ function awardModal(vid){
 
 /* ============ النوافذ والإشعارات ============ */
 function openModal(html){ const m=$('#modal'); m.innerHTML=html; m.classList.add('open'); $('#scrim').classList.add('open'); }
-function closeModal(){ scanStop(); $('#modal').classList.remove('open'); $('#modal').innerHTML=''; if(!UI.drawer) $('#scrim').classList.remove('open'); MODAL_AFTER=null; }
+function closeModal(){ scanStop(); if(SELFIE){ const r=SELFIE.resolve; selfieStop(); SELFIE=null; setTimeout(()=>r(null)); } $('#modal').classList.remove('open'); $('#modal').innerHTML=''; if(!UI.drawer) $('#scrim').classList.remove('open'); MODAL_AFTER=null; }
 function askConfirm(title, text, ok='تأكيد', danger=false){
   return new Promise(res=>{
     openModal(`<div class="modal-h"><h2>${esc(title)}</h2></div><div class="modal-b"><p style="margin:0">${text}</p></div><div class="modal-f"><button class="btn ${danger?'crit':'primary'}" id="cf-ok">${esc(ok)}</button><button class="btn" id="cf-no">إلغاء</button></div>`);
@@ -3198,7 +3244,7 @@ const ACT = {
     const groups={}; vols().forEach(v=>{ (groups[String(v.code)] ||= []).push(v); });
     const dupe=Object.values(groups).filter(g=>g.length>1);
     const fixIds=new Set(dupe.flat().map(v=>v.id));
-    const list0=vols().filter(v=>(!S.profiles[v.id] && !v.credSent) || fixIds.has(v.id)).sort((a,b)=>a.name.localeCompare(b.name,'ar'));
+    const list0=vols().filter(v=>(!S.profiles[v.id] && !v.credSent) || fixIds.has(v.id) || (S.secrets[String(v.code)]?.pinHash||'x')==='x' || S.secrets[String(v.code)]?.vid!==v.id).sort((a,b)=>a.name.localeCompare(b.name,'ar'));
     if(!list0.length) return toast('كل المتطوعين إما دخلوا أو وصلتهم رسالتهم ✓','ok');
     if(!await askConfirm('رموز جديدة',`${dupe.length?`لقيت ${dupe.length} رقم مكرر وبيتصلح (كل واحد ياخذ رقم خاص فيه). `:''}بيتم إنشاء رمز جديد لـ ${list0.length} متطوع، والرموز القديمة تتوقف. بعدها ترسلين لهم الرسائل الجديدة.`,'إنشاء الرموز')) return;
     for(const g of dupe){ const code=String(g[0].code); g.sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
@@ -3222,6 +3268,10 @@ const ACT = {
   'thx-seen': el=>{ lsSet('thxSeen:'+el.dataset.id, thanksOf(el.dataset.id).length); scheduleRender(); },
   'hours-dl': async ()=>{ const data=hoursCsv(); try{ await DL.save({filename:`الساعات-التطوعية-${cfg().eventName||''}.csv`, data:new Blob([data],{type:'text/csv'})}); }catch{ try{ await navigator.clipboard.writeText(data); toast('تم نسخ الملف','ok'); }catch{ toast('تعذر التنزيل','warn'); } } },
   'pay-report': async ()=>{ const q=x=>'"'+String(x??'').replace(/"/g,'""')+'"'; const data='\ufeff'+[['الاسم','أيام الاستحقاق','المستحق','المحوّل','المتبقي','الآيبان','تاريخ التحويل'].map(q).join(','), ...balRows().map(r=>{ const last=Object.values(S.payouts).filter(p=>p.v===r.v.id).sort((a,b)=>b.at-a.at)[0]; return [r.v.name, r.b.okDays, r.b.earned, r.b.paid, r.b.bal, String(r.pi?.iban||'').replace(/\s+/g,''), last?new Date(last.at).toLocaleDateString('en-GB'):''].map(q).join(','); })].join('\n'); try{ await DL.save({filename:`تقرير-البدل-${cfg().eventName||''}.csv`, data:new Blob([data],{type:'text/csv'})}); }catch{ toast('تعذر التنزيل','warn'); } },
+  'selfie-snap': ()=>{ const v=$('#sf-v'); if(!v||!v.videoWidth) return; const S0=320; const cv=document.createElement('canvas'); cv.width=S0; cv.height=S0; const x=cv.getContext('2d'); const m=Math.min(v.videoWidth,v.videoHeight); x.translate(S0,0); x.scale(-1,1); x.drawImage(v,(v.videoWidth-m)/2,(v.videoHeight-m)/2,m,m,0,0,S0,S0); let q=.8, u=cv.toDataURL('image/jpeg',q); while(u.length>45000&&q>.4){ q-=.1; u=cv.toDataURL('image/jpeg',q); } selfieDone({img:u}); },
+  'selfie-skip': ()=>selfieDone({img:'', reason:'nocam'}),
+  'selfie-cancel': ()=>selfieDone(null),
+  'selfie-toggle': el=>{ put('config','main',{...cfg(), selfie:el.checked}); },
   'wall-ops': ()=>{ UI.wallOps=!UI.wallOps; scheduleRender(); },
   'prof-edit': ()=>{ UI.profEdit=true; scheduleRender(); window.scrollTo(0,0); },
   'prof-cancel': ()=>{ UI.profEdit=false; scheduleRender(); },
@@ -3300,11 +3350,13 @@ const ACT = {
       el.disabled=true; const old=el.innerHTML; el.innerHTML='جارٍ التحقق من موقعك…';
       try{ const r=await geoCheck(); el.disabled=false; el.innerHTML=old;
         if(!r.ok) return openModal(`<div class="modal-h"><h2>${ic('zones')} أنت خارج موقع الفعالية</h2><button class="btn ghost sm" data-act="close-modal" aria-label="إغلاق">${ic('x')}</button></div><div class="modal-b"><p style="margin:0">موقعك الحالي يبعد <b class="num">${r.d>=1000?(r.d/1000).toFixed(1)+' كم':r.d+' م'}</b> عن موقع الفعالية. تسجيل الحضور متاح بس لما توصل.</p><a class="btn" href="${esc(mapsLink(cfg().geo))}" target="_blank" rel="noopener">${ic('zones')} اعرض موقع الفعالية على الخريطة</a><p class="tiny muted" style="margin:0">إذا كنت في الموقع والرسالة تطلع لك، اطلع لمكان مفتوح وحاول مرة ثانية، أو سجّل من نقطة التسجيل عند المدخل.</p></div>`);
+        if(!await withSelfie(vid)) return;
         setStatus(vid,'active','self',{geo:true, dist:r.d, acc:r.acc}); toast('تم تسجيل حضورك من موقع الفعالية','ok'); return;
       }catch(e){ el.disabled=false; el.innerHTML=old;
         return openModal(`<div class="modal-h"><h2>${ic('zones')} نحتاج إذن الموقع</h2><button class="btn ghost sm" data-act="close-modal" aria-label="إغلاق">${ic('x')}</button></div><div class="modal-b"><p style="margin:0">${e.code==='denied'?'رفضت إذن الموقع. عشان تسجل حضورك من جوالك لازم تسمح للمتصفح يعرف موقعك.':'ما قدرنا نحدد موقعك. تأكد إن خدمات الموقع شغالة وحاول مرة ثانية.'}</p><p class="small muted" style="margin:0">في الآيفون: الإعدادات ← الخصوصية والأمان ← خدمات الموقع ← Safari ← "أثناء الاستخدام". وفي أندرويد: اضغط على القفل جنب الرابط ← الأذونات ← الموقع.</p><p class="tiny muted" style="margin:0">أو سجّل حضورك من نقطة التسجيل عند المدخل.</p></div>`);
       }
     }
+    if(s==='active' && (cur?.status==='idle'||cur?.status==='out') && !await withSelfie(vid)) return;
     setStatus(vid,s,'self'); toast(STATUS[s].t,'ok'); },
   'v-alert': el=>{ const t=el.dataset.t; const T=ALERT_T[t]; openModal(`<div class="modal-h"><h2>${T.t}</h2><button class="btn ghost sm" data-act="close-modal">${ic('x')}</button></div><form data-form="v-alert" data-t="${t}"><div class="modal-b"><label class="small muted" for="va-text">تفاصيل (اختياري)</label><textarea class="input" id="va-text" name="text" placeholder="${t==='crowd'?'مثال: تكدس عند المدخل الشرقي':t==='medical'?'مثال: زائر مغمى عليه عند البوابة 3':'مثال: نحتاج شخصين إضافيين للتنظيم'}"></textarea>${micBtn('#va-text')}</div><div class="modal-f"><button class="btn ${T.c==='crit'?'crit':'primary'}">إرسال البلاغ</button><button type="button" class="btn" data-act="close-modal">إلغاء</button></div></form>`); },
 };
@@ -3337,14 +3389,34 @@ const FORMS = {
     else { const pin=(fd.get('pin')||'').trim(); if(pin && !/^\d{6}$/.test(pin)) return toast('الرمز لازم 6 أرقام','warn'); const r=createVolunteer({name,phone:fd.get('phone'),role:fd.get('role'),zone:fd.get('zone'),pin:pin||null,shiftStart:fd.get('shiftStart')||'',shiftEnd:fd.get('shiftEnd')||'',reserve:!!fd.get('reserve')}); credsModal([r]); }
   },
   'fix-phones': async f=>{
-    const norm=t=>String(t||'').replace(/[\u200e\u200f\u202a-\u202e]/g,'').replace(/\s+/g,' ').trim();
-    const lines=String(new FormData(f).get('text')||'').split(/\n+/).map(l=>l.trim()).filter(Boolean);
-    const changed=[], missing=[];
-    for(const l of lines){ const parts=l.split(/[,،\t;|]+/).map(norm).filter(Boolean); const phone=(parts.find(x=>/^\+?\d[\d\s-]{6,}$/.test(x))||'').replace(/[\s-]/g,''); const name=parts.find(x=>!/^\+?\d[\d\s-]{6,}$/.test(x)); if(!name||!phone) continue;
-      const v=vols().find(x=>norm(x.name)===name); if(!v){ missing.push(name); continue; }
-      const sec=secretOf(v)||{vid:v.id}; if(sec.vid!==v.id) continue;
-      if((sec.phone||'')!==phone){ put('secrets', String(v.code), {...sec, phone}); const cur=S.volunteers[v.id]; put('volunteers', v.id, (({credSent,...r})=>r)({...cur, phone})); changed.push(v.name); if(DB) await sleep(40); } }
-    closeModal(); openModal(`<div class="modal-h"><h2>تم التصحيح</h2><button class="btn ghost sm" data-act="close-modal" aria-label="إغلاق">${ic('x')}</button></div><div class="modal-b stack"><div>تصحّح جوال <b class="num">${changed.length}</b> متطوع${changed.length?`:<div class="small">${changed.map(esc).join('، ')}</div>`:''}</div>${missing.length?`<div class="small muted">ما لقيت هالأسماء: ${missing.map(esc).join('، ')}</div>`:''}<p class="small muted" style="margin:0">الحين افتحي <b>📲 إرسال بيانات الدخول</b> واختاري ملف البيانات الجديد، وأرسلي للي ما عليهم ✓.</p></div><div class="modal-f"><button class="btn primary" data-act="close-modal">تم</button></div>`); },
+    const norm=t=>String(t||'').replace(/[‎‏‪-‮]/g,'').replace(/\s+/g,' ').trim();
+    const book={}; String(new FormData(f).get('text')||'').split(/\n+/).forEach(l=>{ const parts=l.split(/[,،\t;|]+/).map(norm).filter(Boolean); const ph=(parts.find(x=>/^\+?\d[\d\s-]{6,}$/.test(x))||'').replace(/[\s-]/g,''); const nm=parts.find(x=>!/^\+?\d[\d\s-]{6,}$/.test(x)); if(nm&&ph) book[nm]=ph; });
+    if(!Object.keys(book).length) return toast('الصقي القائمة أول','warn');
+    const btn=f.querySelector('.btn.primary'); if(btn){ btn.disabled=true; btn.textContent='جارٍ الإصلاح…'; }
+    // 1) أرقام فريدة
+    const groups={}; vols().forEach(v=>{ (groups[String(v.code)] ||= []).push(v); });
+    for(const g of Object.values(groups).filter(g=>g.length>1)){ g.sort((a,b)=>(a.createdAt||0)-(b.createdAt||0)); for(const v of g.slice(1)){ const nc=nextCode(); const cur=S.volunteers[v.id]; await put('volunteers', v.id, {...cur, code:nc}); S.volunteers[v.id]={...cur, code:nc}; S.secrets[nc]={vid:v.id}; if(DB) await sleep(50); } }
+    // 2) إعادة بناء الأسرار لكل متطوع
+    const changed=[], missing=[], repin=[]; const codes=new Set();
+    for(const v of vols()){ const code=String(v.code); codes.add(code); const sec=S.secrets[code]||{}; const ph=book[norm(v.name)];
+      if(!ph) missing.push(v.name);
+      const owner = sec.vid===v.id && sec.pinHash && sec.pinHash!=='x';
+      const phone = ph || (sec.vid===v.id ? sec.phone : '') || '';
+      if(owner && (sec.phone||'')===phone) continue;
+      const doc={vid:v.id, phone, pinHash: owner ? sec.pinHash : 'x'};
+      put('secrets', code, doc); S.secrets[code]=doc;
+      if(!owner) repin.push(v.name); else changed.push(v.name);
+      const cur=S.volunteers[v.id]; put('volunteers', v.id, (({credSent,...r})=>r)({...cur, phone})); if(DB) await sleep(40); }
+    // 3) حذف أسرار يتيمة
+    let orphans=0; for(const k of Object.keys(S.secrets)){ if(k.startsWith('__') || codes.has(k)) continue; del('secrets', k); orphans++; if(DB) await sleep(30); }
+    if(DB){ try{ const ss=await DB.collection('sessions').get(); for(const d of ss.docs){ const c=String(d.data().code||''); if(!codes.has(c) || repin.length && vols().some(v=>String(v.code)===c && repin.includes(v.name))) await d.ref.delete().catch(()=>{}); } }catch{} }
+    mergeSecrets(); invalidate();
+    closeModal(); openModal(`<div class="modal-h"><h2>تم الإصلاح ✅</h2><button class="btn ghost sm" data-act="close-modal" aria-label="إغلاق">${ic('x')}</button></div><div class="modal-b stack">
+      <div>تصحّح جوال <b class="num">${changed.length}</b>${changed.length?`: <span class="small">${changed.map(esc).join('، ')}</span>`:''}</div>
+      <div>يحتاجون رمز جديد <b class="num">${repin.length}</b>${repin.length?`: <span class="small">${repin.map(esc).join('، ')}</span>`:''}</div>
+      ${orphans?`<div class="small muted">انحذف ${orphans} رمز قديم ما له صاحب.</div>`:''}
+      ${missing.length?`<div class="small" style="color:var(--warn)">ما لقيت بالقائمة: ${missing.map(esc).join('، ')}</div>`:''}
+      <p class="small muted" style="margin:0">الحين اضغطي <b>🔑 رموز للي ما وصلتهم رسالة</b> عشان ترسلين للي تغيروا بس.</p></div><div class="modal-f"><button class="btn primary" data-act="close-modal">تم</button></div>`); },
   import: async f=>{
     const lines=(new FormData(f).get('text')||'').split(/\n+/).map(l=>l.trim()).filter(Boolean);
     if(!lines.length) return;
@@ -3467,7 +3539,7 @@ function startListeners(role){
   UNSUBS.push(DB.doc('config/main').onSnapshot({includeMetadataChanges:true}, sn=>{ if(!sn.exists && sn.metadata.fromCache) return; S.config = sn.exists ? sn.data() : null; AUTH.err=null; clearTimeout(slowT); S.ready=true; S.slow=false; invalidate(); scheduleRender(); }, onErr));
   if(role==='guest') return;
   COLS.forEach(c=>{
-    if((c==='secrets'||c==='meals'||c==='payinfo'||c==='payouts'||c==='profiles') && role!=='admin') return;
+    if((c==='secrets'||c==='meals'||c==='payinfo'||c==='payouts'||c==='profiles'||c==='selfies') && role!=='admin') return;
     let q=DB.collection(c); if(c==='notes' && role!=='admin') q=q.where('kind','in',['praise','award','box']);
     UNSUBS.push(q.onSnapshot(snap=>{ const o={}; snap.docs.forEach(d=>{ o[d.id]=d.data(); }); S[c]=o; if(c==='volunteers'||c==='secrets') mergeSecrets();
       if(c==='volunteers' && role==='vol' && !PAY_SUB){ const me=findByCode(AUTH.volCode); if(me){ PAY_SUB=true;
