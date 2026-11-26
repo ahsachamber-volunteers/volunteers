@@ -2491,7 +2491,7 @@ function loginVolModal(){
   </div><div class="modal-f"><button class="btn primary">دخول</button><button type="button" class="btn" data-act="close-modal">إلغاء</button></div></form>`);
   setTimeout(()=>$('#v-code')?.focus(),50);
 }
-const findByCode = code => vols().find(v=>String(v.code)===String(code).trim());
+const findByCode = code => allVols().find(v=>String(v.code)===String(code).trim());
 
 /* ---------- واجهة المشرف ---------- */
 const TABS = [
@@ -4057,7 +4057,7 @@ async function boot(){
   window.LOADT=Date.now(); window.LOADSTEP='1 init'; setInterval(()=>{ if(!S.ready) scheduleRender(); }, 3000);
   firebase.initializeApp(FIREBASE_CONFIG);
   DB=firebase.firestore();
-  try{ DB.settings({ignoreUndefinedProperties:true, merge:true}); }catch{}
+  try{ DB.settings({ignoreUndefinedProperties:true, experimentalForceLongPolling:true, merge:true}); }catch{}
   /* بدون ذاكرة محفوظة: كانت تعلّق سفاري بعد انقطاع الحصة */
   try{ indexedDB.deleteDatabase('firestore/[DEFAULT]/volunteers-event/main'); }catch{}
   S.mode='db';
