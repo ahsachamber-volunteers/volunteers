@@ -923,6 +923,8 @@ const LOG_T = {
   move:{t:'نُقل', i:'move', c:'info'},
   energy:{t:'سجّل مستوى طاقته', i:'bolt', c:'info'},
   mini:{t:'أخذ استراحة قصيرة', i:'coffee', c:'ok'},
+  mini_ack:{t:'استلم الاستراحة القصيرة وشكر 🙏', i:'coffee', c:'ok'},
+  mini_later:{t:'أجّل الاستراحة القصيرة (مشغول)', i:'coffee', c:'idle'},
   prayer_out:{t:'طلع للصلاة', i:'out', c:'info'},
   ping_miss:{t:'ما رد على وينك', i:'alert', c:'crit'},
   roll:{t:'سجّل تفقّد الفريق', i:'check', c:'info'},
@@ -1642,15 +1644,54 @@ const sameGrp = (z1,z2) => { const a=zoneById(z1), b=zoneById(z2); if(!a||!b) re
 
 /* ---------- الضيافة (فاطمة) ---------- */
 ALERT_T.supply={t:'نقص ضيافة',c:'warn',i:'gift'}; ALERT_T.dalal={t:'طلب لدلال',c:'crit',i:'bell'};
-const OPS_TYPES = ['supply','dalal'];
+ALERT_T.ftask={t:'مهمة من دلال',c:'warn',i:'check'};
+const OPS_TYPES = ['supply','dalal','ftask'];
 const opsAlert = a => OPS_TYPES.includes(a.type);
 function hospDay(){ const h=cfg().hosp||{}; return h.day===dayKey()? h : {day:dayKey()}; }
+/* ---------- الاستراحات: مين برا ومين ما رجع ---------- */
+function awayList(){
+  const p=prayerNow(); const out=[];
+  for(const v of vols()){
+    if(v.status==='break'){ const left=breakLeft(v.id); out.push({v, k:'brk', t:'استراحة', since:v.breakAt, late:left<0, txt:left<0?`⚠️ تجاوز رصيده بـ ${fmtDur(-left)}`:`باقي له ${fmtDur(left)}`}); continue; }
+    if(onMini(v)){ const pd=v.mini.pend; out.push({v, k:'mini', t:pd?'أُرسلت له استراحة':'استراحة قصيرة', since:v.mini.ack||v.mini.at, late:false, txt:pd?`📩 ما شافها بعد (${fmtDur(now()-v.mini.at)})`:`🙏 استلمها وشكر · يرجع بعد ${fmtDur(v.mini.until-now())}`}); continue; }
+    const ps=v.prayer; if(v.status==='active' && ps && ps.day===dayKey() && ps.out && !ps.back){ const dur=(prayCfg().dur||20)*60000; const left=ps.out+dur-now(); out.push({v, k:'pray', t:'صلاة '+(PRAYERS.find(x=>x.k===ps.p)?.t||''), since:ps.out, late:left<0, txt:left<0?`⚠️ متأخر ${fmtDur(-left)}`:`يرجع بعد ${fmtDur(left)}`}); }
+  }
+  return out.sort((a,b)=>(b.late-a.late)||(a.since-b.since));
+}
+function miniAckNotify(){ const seen=+lsGet('ackSeen')||0; const MZ=myZoneSet(); const L=Object.values(S.logs).filter(l=>(l.type==='mini_ack'||l.type==='mini_later') && l.at>seen && now()-l.at<5*60000 && (!MZ||MZ.has(l.zone))).sort((a,b)=>a.at-b.at);
+  if(!L.length) return; lsSet('ackSeen', L[L.length-1].at);
+  setTimeout(()=>L.slice(-3).forEach(l=>toast(l.type==='mini_ack'?`🙏 ${firstName(S.volunteers[l.v]?.name||'')} شكرك وطلع استراحته`:`💪 ${firstName(S.volunteers[l.v]?.name||'')} مشغول، يطلع بعدين`, 'ok')),200); }
+const awayLate = () => { try{ miniAckNotify(); return awayList().filter(x=>x.late); }catch{ return []; } };
+function awayView(){
+  const L=awayList(); const late=L.filter(x=>x.late);
+  const row=x=>`<div class="li">${avatar(x.v.id)}<div class="grow"><div class="t">${esc(x.v.name)} <span class="pill ${x.late?'crit':x.k==='pray'?'ok':'warn'} nodot tiny">${x.t}</span></div><div class="s"><span class="zdot" style="--zc:${zColor(x.v.zone)};display:inline-block;margin-inline-end:4px"></span>${esc(zName(x.v.zone))} · طلع ${fmtTime(x.since)} · <span style="${x.late?'color:var(--crit);font-weight:700':''}">${x.txt}</span></div></div><div class="row">${x.late?`<button class="btn sm" data-act="ping" data-id="${x.v.id}">📲 وينك؟</button>`:''}${x.late&&x.v.phone?`<a class="btn sm" href="tel:${esc(String(x.v.phone).replace(/[^\d+]/g,''))}">${ic('phone')}</a>`:''}</div></div>`;
+  const grp=(k,title)=>{ const g=L.filter(x=>!x.late && x.k===k); return g.length?`<section class="card"><div class="card-h"><h2>${title}</h2><span class="pill nodot num">${g.length}</span></div><div class="list">${g.map(row).join('')}</div></section>`:''; };
+  const team=zones().map(z=>{ const m=vols().filter(v=>v.zone===z.id).sort((a,b)=>a.name.localeCompare(b.name,'ar')); if(!m.length) return ''; const here=m.filter(v=>v.status==='active'&&!onMini(v)&&!(v.prayer&&v.prayer.day===dayKey()&&v.prayer.out&&!v.prayer.back)).length;
+    const pill=v=>{ const a=L.find(x=>x.v.id===v.id); if(a) return `<span class="pill ${a.late?'crit':'warn'} nodot tiny">${a.late?'ما رجع':a.t}</span>`; return v.status==='active'?'<span class="pill ok nodot tiny">في الزون</span>':v.status==='out'?'<span class="pill idle nodot tiny">انصرف</span>':'<span class="pill idle nodot tiny">ما حضر</span>'; };
+    return `<section class="card"><div class="card-h"><h2><span class="zdot" style="--zc:${esc(z.color)};display:inline-block;margin-inline-end:6px"></span>${esc(z.name)}</h2><span class="tiny muted num">في الزون ${here} من ${m.length}</span></div><div class="list">${m.map(v=>`<div class="li" style="padding:6px 12px">${avatar(v.id)}<div class="grow"><div class="t small">${esc(v.name)}</div></div>${pill(v)}</div>`).join('')}</div></section>`; }).join('');
+  return `<div class="section-title"><h2>☕ الاستراحات الحين</h2><span class="tiny muted num">برا ${L.length}${late.length?` · ما رجعوا ${late.length}`:''}</span></div>
+  ${late.length?`<section class="card" style="border-color:var(--crit)"><div class="card-h"><h2 style="color:var(--crit)">⚠️ ما رجعوا</h2><span class="pill crit num">${late.length}</span></div><div class="list">${late.map(row).join('')}</div></section>`:''}
+  ${grp('pray','🕌 في الصلاة')}${grp('brk','☕ في استراحة')}${grp('mini','🥤 استراحة قصيرة')}
+  ${!L.length?'<div class="card empty">الكل في مكانه الحين 👌</div>':''}
+  <div class="section-title"><h2>👥 ${myZoneSet()?'متطوعيني':'المتطوعون حسب الزون'}</h2></div>
+  ${team||'<div class="card empty">ما فيه متطوعين في زوناتك.</div>'}`;
+}
+/* مهام دلال لفاطمة */
+function ftaskCard(){
+  const R=ROLE(); const isHosp=R==='hosp'; if(!isHosp && !isFull()) return '';
+  const T=Object.entries(S.alerts).filter(([,a])=>a.type==='ftask').sort((a,b)=>(a[1].resolved-b[1].resolved)||b[1].at-a[1].at).filter(([,a])=>!a.resolved||now()-a.resolvedAt<12*3600000).slice(0,20);
+  if(isHosp){ const nw=T.filter(([,a])=>!a.resolved)[0]?.[1]?.at||0; if(nw && nw>(+lsGet('ftSeen')||0)){ lsSet('ftSeen',nw); setTimeout(()=>{ toast('📋 مهمة جديدة من دلال','warn'); try{ navigator.vibrate&&navigator.vibrate([300,120,300]); say('مهمة جديدة من دلال'); }catch{} },200); } }
+  const open=T.filter(([,a])=>!a.resolved).length;
+  return `<section class="card" ${open&&isHosp?'style="border-color:var(--warn)"':''}><div class="card-h"><h2>📋 مهام من دلال</h2>${isHosp?(open?`<span class="pill warn num">${open}</span>`:''):`<button class="btn sm primary" data-act="ftask-new">${ic('plus')} مهمة لفاطمة</button>`}</div>
+    ${T.length?`<div class="list">${T.map(([id,a])=>`<div class="li"><span class="pill ${a.resolved?'ok':'warn'} nodot">${a.resolved?'✓ تم':'جديدة'}</span><div class="grow"><div class="t">${esc(a.text||'')}</div><div class="s">${esc(a.byName||'دلال')} · ${ago(a.at)}${a.resolved&&a.resolvedAt?' · خلصت '+fmtTime(a.resolvedAt):''}</div></div>${a.resolved?'':isHosp?`<button class="btn sm ok" data-act="alert-resolve" data-id="${id}">تم ✓</button>`:`<button class="btn sm ghost" data-act="ftask-del" data-id="${id}" aria-label="حذف">${ic('x')}</button>`}</div>`).join('')}</div>`:'<div class="empty small">ما فيه مهام</div>'}</section>`;
+}
 function hospView(){
   const h=hospDay(); const st=zoneStats(); const present=allVols().filter(v=>v.status==='active'||v.status==='break');
   const sup=Object.entries(S.alerts).filter(([,a])=>a.type==='supply').sort((a,b)=>(a[1].resolved-b[1].resolved)||b[1].at-a[1].at).slice(0,30);
   const dal=Object.entries(S.alerts).filter(([,a])=>a.type==='dalal').sort((a,b)=>b[1].at-a[1].at).slice(0,10);
   const item=(k,t)=>{ const v=h[k]; const list=Array.isArray(v)?v:(v?[v]:[]); return `<div class="li"><span class="pill ${list.length?'ok':'idle'} nodot">${list.length?'✓':'—'}</span><div class="grow"><div class="t">${t}</div><div class="s">${list.length?list.map(x=>fmtTime(x)).join(' · '):'لم يتم بعد'}</div></div><button class="btn sm ${list.length?'':'ok'}" data-act="hosp-done" data-k="${k}">${list.length&&!['cleanM','cleanF'].includes(k)?'تحديث الوقت':'تم ✓'}</button></div>`; };
   return `<div class="section-title"><h2>☕ الضيافة وغرف المتطوعين</h2><span class="tiny muted num">${fmtDay(now())}</span></div>
+  ${ftaskCard()}
   <section class="card"><div class="card-h"><h2>👥 الحاضرين الحين</h2><b class="num">${present.length}</b></div><div class="card-b row">${allZones().map(z=>{ const n=present.filter(v=>v.zone===z.id).length; return `<span class="pill nodot num" style="border:1px solid ${esc(z.color)}"><span class="zdot" style="--zc:${esc(z.color)};display:inline-block;margin-inline-end:6px"></span>${esc(z.name)} ${n}</span>`; }).join('')}</div></section>
   <section class="card"><div class="card-h"><h2>✅ مهام اليوم</h2></div><div class="list">${item('receive','استلام الضيافة من المندوب')}${item('arrange','ترتيب الضيافة في مكانها')}${item('cleanM','نظافة غرفة المتطوعين')}${item('cleanF','نظافة غرفة المتطوعات')}</div></section>
   <section class="card"><div class="card-h"><h2>📝 النواقص</h2><button class="btn sm primary" data-act="sup-new">${ic('plus')} ناقص شي</button></div>
@@ -1817,6 +1858,8 @@ function miniCard(){
 }
 function miniBanner(v){
   if(!onMini(v)) return '';
+  if(v.mini.pend){ if(FX.mini!==v.mini.at){ FX.mini=v.mini.at; setTimeout(()=>{ try{ navigator.vibrate&&navigator.vibrate([400,150,400,150,400]); }catch{} try{ say('جاتك استراحة قصيرة من المشرف'); }catch{} },200); }
+    return `<section class="ping-card" role="alertdialog"><b>☕ جاتك استراحة قصيرة ${v.mini.min||miniCfg().min} دقائق!</b><span class="small">من المشرف، وما تنخصم من رصيدك. الوقت يبدأ لما تضغط "طالع".</span><div class="ping-btns"><button class="btn" data-act="mini-ack">🙏 شكراً، طالع الحين</button><button class="btn" data-act="mini-later">💪 مشغول، بعدين</button></div></section>`; }
   return `<div class="banner ok mini-banner" role="status">☕ <b>استراحة قصيرة</b> <span>اشرب موية وارتاح، ترجع بعد</span> <b class="num" data-countdown="${v.mini.until}">${fmtClock(v.mini.until-now())}</b><span class="tiny">(ما تنخصم من رصيدك)</span></div>`;
 }
 /* ---------- الذروات وطابور الاستراحة ---------- */
@@ -2452,23 +2495,23 @@ const findByCode = code => vols().find(v=>String(v.code)===String(code).trim());
 
 /* ---------- واجهة المشرف ---------- */
 const TABS = [
-  ['dash','اللوحة','dash'],['alerts','البلاغات','bell'],['zones','الزونات','zones'],['people','المتطوعون','people'],
+  ['dash','اللوحة','dash'],['alerts','البلاغات','bell'],['away','الاستراحات','coffee'],['zones','الزونات','zones'],['people','المتطوعون','people'],
   ['activity','السجل والتعاميم','activity'],['honors','التحفيز والتكريم','trophy'],['hosp','الضيافة','gift'],['reports','التقارير','reports'],['event-setup','الإعدادات','settings'],
 ];
-const TAB_SHORT = {dash:'اللوحة',alerts:'البلاغات',zones:'الزونات',people:'المتطوعون',activity:'السجل',honors:'التكريم',hosp:'الضيافة',reports:'التقارير','event-setup':'الإعدادات'};
-const ROLE_TABS = {attend:['dash','alerts','people'], hosp:['hosp'], zones:['dash','alerts','zones','people','honors']};
+const TAB_SHORT = {dash:'اللوحة',alerts:'البلاغات',away:'استراحات',zones:'الزونات',people:'المتطوعون',activity:'السجل',honors:'التكريم',hosp:'الضيافة',reports:'التقارير','event-setup':'الإعدادات'};
+const ROLE_TABS = {attend:['dash','alerts','away','people'], hosp:['hosp'], zones:['dash','alerts','away','zones','people','honors']};
 function roleTabs(){ const r=ROLE(); const allow=ROLE_TABS[r]; return allow? TABS.filter(t=>allow.includes(t[0])) : TABS; }
 function curTab(){ const h=location.hash.slice(1); const T=roleTabs(); return T.some(t=>t[0]===h) ? h : T[0][0]; }
 function adminView(){
   if(location.hash==='#ops-wall') return wallView();
   const tab=curTab(); const c=cfg();
   const openAlerts = Object.values(S.alerts).filter(a=>!a.resolved && !opsAlert(a) && (!myZoneSet() || myZoneSet().has(a.zone))).length;
-  const R=ROLE(); const body = {dash:R==='attend'?attendDash:dashView, hosp:hospView, alerts:alertsBoard, zones:boardView, people:peopleView, activity:activityView, honors:honorsView, reports:reportsView, 'event-setup':settingsView}[tab]();
+  const R=ROLE(); const body = {dash:R==='attend'?attendDash:dashView, hosp:hospView, alerts:alertsBoard, away:awayView, zones:boardView, people:peopleView, activity:activityView, honors:honorsView, reports:reportsView, 'event-setup':settingsView}[tab]();
   const badge = n => n ? `<span class="badge num">${n}</span>` : '';
   return `<div class="shell">
     <aside class="side">
       <div class="brand">${brandMark()}<div><b>${esc(cfg().eventName||'إدارة المتطوعين')}</b><span class="tiny muted">${ROLE_T[R]||'لوحة المشرف'}${myStaff()?.name?' · '+esc(myStaff().name):''}</span></div></div>
-      ${roleTabs().map(([id,t,i])=>`<button class="nav-item" data-act="tab" data-tab="${id}" ${tab===id?'aria-current="page"':''}>${ic(i)} ${t} ${id==='alerts'?badge(openAlerts):''}</button>`).join('')}
+      ${roleTabs().map(([id,t,i])=>`<button class="nav-item" data-act="tab" data-tab="${id}" ${tab===id?'aria-current="page"':''}>${ic(i)} ${t} ${id==='alerts'?badge(openAlerts):id==='away'?badge(awayLate().length):''}</button>`).join('')}
       <div class="side-foot">
         <button class="btn block" data-act="to-kiosk">${ic('kiosk')} فتح نقطة التسجيل</button>
         <button class="btn ghost block" data-act="logout">${ic('logout')} خروج</button>
@@ -2497,7 +2540,7 @@ function adminView(){
       <main class="view" id="view">${body}</main>
     </div>
     <nav class="bottom" aria-label="التنقل">
-      ${roleTabs().map(([id,t,i])=>`<button data-act="tab" data-tab="${id}" ${tab===id?'aria-current="page"':''}>${ic(i)}<span>${TAB_SHORT[id]}</span>${id==='alerts'&&openAlerts?`<span class="badge num">${openAlerts}</span>`:''}</button>`).join('')}
+      ${roleTabs().map(([id,t,i])=>`<button data-act="tab" data-tab="${id}" ${tab===id?'aria-current="page"':''}>${ic(i)}<span>${TAB_SHORT[id]}</span>${id==='alerts'&&openAlerts?`<span class="badge num">${openAlerts}</span>`:''}${id==='away'&&awayLate().length?`<span class="badge num">${awayLate().length}</span>`:''}</button>`).join('')}
     </nav>
   </div>${UI.sel.size && tab==='zones' ? actionBar() : ''}`;
 }
@@ -2532,6 +2575,7 @@ function dashView(){
   ${tickerHtml()}
   ${lostCard()}
   ${dalalCard()}
+  ${ftaskCard()}
   ${pingCard()}
   ${rollCard()}
   ${violCard()}
@@ -3627,6 +3671,8 @@ const ACT = {
   'ping-reply': el=>{ const vid=getSes()?.id; const v=S.volunteers[vid]; if(!v?.ping) return; put('volunteers', vid, {...v, ping:{...v.ping, reply:el.dataset.r, replyAt:now()}}); toast('وصل ردك للمشرف 👍','ok'); },
   'hosp-done': el=>{ const k=el.dataset.k; const h=hospDay(); const v=['cleanM','cleanF'].includes(k)?[...(h[k]||[]), now()]:now(); put('config','main',{...cfg(), hosp:{...h, day:dayKey(), [k]:v}}); toast('تم ✓','ok'); },
   'sup-new': ()=>openModal(`<div class="modal-h"><h2>📝 ناقص شي</h2><button class="btn ghost sm" data-act="close-modal" aria-label="إغلاق">${ic('x')}</button></div><form data-form="sup"><div class="modal-b"><input class="input" name="text" required placeholder="مثال: موية، أكواب، مناديل في غرفة المتطوعات" maxlength="120"></div><div class="modal-f"><button class="btn primary">إضافة</button></div></form>`),
+  'ftask-new': ()=>openModal(`<div class="modal-h"><h2>📋 مهمة لفاطمة</h2><button class="btn ghost sm" data-act="close-modal" aria-label="إغلاق">${ic('x')}</button></div><form data-form="ftask"><div class="modal-b"><label class="small muted">وش المطلوب من فاطمة؟</label><textarea class="input" name="text" required maxlength="200" placeholder="مثال: وزّعي الموية على زون الأخضر" style="min-height:80px"></textarea></div><div class="modal-f"><button class="btn primary">إرسال المهمة</button></div></form>`),
+  'ftask-del': el=>{ del('alerts', el.dataset.id); },
   'dalal-new': ()=>openModal(`<div class="modal-h"><h2>🔔 تنبيه دلال</h2><button class="btn ghost sm" data-act="close-modal" aria-label="إغلاق">${ic('x')}</button></div><form data-form="dalal"><div class="modal-b"><label class="small muted">وش الناقص أو المطلوب؟</label><textarea class="input" name="text" required maxlength="200" placeholder="مثال: الموية خلصت في غرفة المتطوعات" style="min-height:80px"></textarea></div><div class="modal-f"><button class="btn primary">إرسال التنبيه</button></div></form>`),
   'pray-go': el=>{ const vid=getSes()?.id; const p=prayerNow(); if(!vid||!p) return; const c=canPray(vid,p); if(!c.ok) return toast(c.r?.g===2?`دورك بعد ما يرجع ${firstName(c.wait?.name||'')}`:'دورك يبدأ مع الأذان','warn'); const v=S.volunteers[vid]; put('volunteers',vid,{...v, prayer:{p:p.k, day:dayKey(), out:now()}}); addLog(vid,'prayer_out',{by:'self', p:p.k}); toast('تقبّل الله 🕌','ok'); },
   'pray-back': el=>{ const vid=getSes()?.id; const p=prayerNow(); const v=S.volunteers[vid]; if(!v?.prayer) return; const late=now()>v.prayer.out+(prayCfg().dur||20)*60000; put('volunteers',vid,{...v, prayer:{...v.prayer, back:now()}}); addLog(vid,'prayer_in',{by:'self', late, p:v.prayer.p}); toast(late?'أهلاً بعودتك':'أهلاً بعودتك، +5 نقاط انضباط 👏','ok'); },
@@ -3655,11 +3701,13 @@ const ACT = {
   'wall-ops': ()=>{ UI.wallOps=!UI.wallOps; scheduleRender(); },
   'prof-edit': ()=>{ UI.profEdit=true; scheduleRender(); window.scrollTo(0,0); },
   'prof-cancel': ()=>{ UI.profEdit=false; scheduleRender(); },
+  'mini-ack': ()=>{ const vid=getSes()?.id; const v=S.volunteers[vid]; if(!v?.mini) return; const mn=v.mini.min||miniCfg().min; put('volunteers',vid,{...v, mini:{...v.mini, pend:false, ack:now(), until:now()+mn*60000}}); addLog(vid,'mini_ack',{by:'self'}); toast('استمتع باستراحتك ☕','ok'); },
+  'mini-later': ()=>{ const vid=getSes()?.id; const v=S.volunteers[vid]; if(!v?.mini) return; put('volunteers',vid,{...v, mini:{...v.mini, pend:false, later:now(), until:now()}}); addLog(vid,'mini_later',{by:'self'}); toast('وصل للمشرف إنك مشغول 👍','ok'); },
   'mini-toggle': el=>{ put('config','main',{...cfg(), mini:{...miniCfg(), enabled:el.checked}}); },
   'mini-skipz': el=>{ UI.miniSkip=[...(UI.miniSkip||[]), el.dataset.z]; scheduleRender(); },
   'mini-skip': ()=>{ UI.miniSkip=[]; const c=cfg(); put('config','main',{...c, miniRounds:{...(c.miniRounds||{}), ...Object.fromEntries(zones().map(z=>[z.id,now()]))}}); toast('تم التخطي، الجولة الجاية بعد '+miniCfg().every+' دقيقة','ok'); },
   'mini-send': async ()=>{ const m=miniCfg(); const picks=miniPicks(); const t=now(); let n=0;
-    for(const p of picks) for(const v of p.vs){ const cur=S.volunteers[v.id]; if(!cur) continue; put('volunteers', v.id, {...cur, mini:{at:t, until:t+m.min*60000}}); addLog(v.id,'mini',{by:'admin', min:m.min}); n++; if(DB) await sleep(30); }
+    for(const p of picks) for(const v of p.vs){ const cur=S.volunteers[v.id]; if(!cur) continue; put('volunteers', v.id, {...cur, mini:{at:t, until:t+(m.min+10)*60000, pend:true, min:m.min}}); addLog(v.id,'mini',{by:'admin', min:m.min}); n++; if(DB) await sleep(30); }
     UI.miniSkip=[]; { const c=cfg(); put('config','main',{...c, miniRounds:{...(c.miniRounds||{}), ...Object.fromEntries(zones().map(z=>[z.id,t]))}}); } toast(`أُرسل ${n} للاستراحة القصيرة ☕`,'ok'); },
   'pay-done': el=>{ const id=el.dataset.id; markPaid(id); toast(`تم: ${S.volunteers[id]?.name}`,'ok'); },
   'pay-undo': el=>{ const id=el.dataset.id; const last=Object.entries(S.payouts).filter(([,p])=>p.v===id).sort((a,b)=>b[1].at-a[1].at)[0]; if(last) del('payouts', last[0]); },
@@ -3769,6 +3817,7 @@ const FORMS = {
     else { const pin=(fd.get('pin')||'').trim(); if(pin && !/^\d{6}$/.test(pin)) return toast('الرمز لازم 6 أرقام','warn'); const r=createVolunteer({name,phone:fd.get('phone'),role:fd.get('role'),zone:fd.get('zone'),pin:pin||null,shiftStart:fd.get('shiftStart')||'',shiftEnd:fd.get('shiftEnd')||'',reserve:!!fd.get('reserve')}); credsModal([r]); }
   },
   roll: f=>{ const vid=getSes()?.id; const zid=f.dataset.z; const team=allVols().filter(v=>v.zone===zid && v.id!==vid && (v.status==='active'||v.status==='break')); const present=new Set([...new FormData(f).getAll('p'), ...team.filter(v=>v.status==='break'||onMini(v)).map(v=>v.id)]); const absent=team.filter(v=>!present.has(v.id)).map(v=>v.id); addLog(vid,'roll',{zone:zid, present:[...present], absent}); toast(absent.length?`وصل للمشرفة: ${absent.length} غايب`:'شكراً، الفريق كامل 👏','ok'); },
+  ftask: f=>{ const t=String(new FormData(f).get('text')||'').trim(); if(!t) return; put('alerts', uid('a'), {type:'ftask', text:t, zone:'', by:'', byName:myStaff()?.name||(String(AUTH.user?.email||'').toLowerCase()===DALAL.email?'دلال':'المشرفة'), at:now(), resolved:false}); closeModal(); toast('وصلت المهمة لفاطمة 📋','ok'); },
   sup: f=>{ const t=String(new FormData(f).get('text')||'').trim(); if(!t) return; put('alerts', uid('a'), {type:'supply', text:t, zone:'', by:'', byName:myStaff()?.name||'الضيافة', at:now(), resolved:false}); closeModal(); toast('انضاف للنواقص','ok'); },
   dalal: f=>{ const t=String(new FormData(f).get('text')||'').trim(); if(!t) return; put('alerts', uid('a'), {type:'dalal', text:t, zone:'', by:'', byName:myStaff()?.name||'الضيافة', at:now(), resolved:false});
     const msg=`🔔 تنبيه من الضيافة (${myStaff()?.name||'فاطمة'}):\n${t}`;
