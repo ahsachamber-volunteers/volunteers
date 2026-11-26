@@ -3987,7 +3987,8 @@ function startListeners(role){
   if(role==='guest') return;
   COLS.forEach(c=>{
     if((c==='secrets'||c==='meals'||c==='payinfo'||c==='payouts'||c==='profiles'||c==='selfies') && role!=='admin') return;
-    let q=DB.collection(c); if(c==='notes' && role!=='admin') q=q.where('kind','in',['praise','award','box']);
+    if(role==='admin' && ROLE()==='hosp' && ['logs','notes','thanks','selfies','profiles','payinfo','payouts','meals','legend','missions','secrets','handover','lost','safety'].includes(c)) return;
+    let q=DB.collection(c); if(c==='notes' && role!=='admin') q=q.where('kind','in',['praise','award','box']); if(c==='selfies') q=q.where('day','==',dayKey());
     UNSUBS.push(q.onSnapshot(snap=>{ const o={}; snap.docs.forEach(d=>{ o[d.id]=d.data(); }); S[c]=o; if(c==='volunteers'||c==='secrets') mergeSecrets();
       if(c==='volunteers' && role==='vol' && !PAY_SUB){ const me=findByCode(AUTH.volCode); if(me){ PAY_SUB=true;
         ['payinfo','payouts','profiles'].forEach(pc=>UNSUBS.push(DB.collection(pc).where('v','==',me.id).onSnapshot(sn=>{ const oo={}; sn.docs.forEach(d=>{ oo[d.id]=d.data(); }); S[pc]=oo; if(pc==='profiles') PROF_LOADED=true; invalidate(); scheduleRender(); }, e=>{ if(pc==='profiles') PROF_LOADED=true; onErrFor(pc)(e); }))); } }
@@ -3995,6 +3996,25 @@ function startListeners(role){
   });
 }
 let PAY_SUB=false, PROF_LOADED=false; const RULES_MISS=new Set();
+/* توفير القراءات: المتطوع يسمع لنفسه ولزونه وسجلاته فقط بدل الكل */
+let VZ={me:{}, zone:{}, zid:null, zun:null};
+function volListeners(onErrFor){
+  VZ={me:{}, zone:{}, zid:null, zun:null};
+  const merge=()=>{ S.volunteers={...VZ.zone, ...VZ.me}; invalidate(); scheduleRender(); };
+  const code=String(AUTH.volCode||'').trim(); const codes=[code]; if(/^\d+$/.test(code)) codes.push(+code);
+  UNSUBS.push(DB.collection('volunteers').where('code','in',codes).onSnapshot(snap=>{
+    const o={}; snap.docs.forEach(d=>{ o[d.id]=d.data(); }); VZ.me=o; const me=snap.docs[0]; 
+    if(me){ const id=me.id, z=me.data().zone||'';
+      if(!PAY_SUB){ PAY_SUB=true;
+        ['payinfo','payouts','profiles'].forEach(pc=>UNSUBS.push(DB.collection(pc).where('v','==',id).onSnapshot(sn=>{ const oo={}; sn.docs.forEach(d=>{ oo[d.id]=d.data(); }); S[pc]=oo; if(pc==='profiles') PROF_LOADED=true; invalidate(); scheduleRender(); }, e=>{ if(pc==='profiles') PROF_LOADED=true; onErrFor(pc)(e); })));
+        UNSUBS.push(DB.collection('logs').where('v','==',id).onSnapshot(sn=>{ const oo={}; sn.docs.forEach(d=>{ oo[d.id]=d.data(); }); S.logs=oo; invalidate(); scheduleRender(); }, onErrFor('logs')));
+      }
+      if(z!==VZ.zid){ try{ VZ.zun&&VZ.zun(); }catch{} VZ.zid=z; VZ.zone={};
+        if(z){ const un=DB.collection('volunteers').where('zone','==',z).onSnapshot(sn=>{ const oo={}; sn.docs.forEach(d=>{ oo[d.id]=d.data(); }); VZ.zone=oo; merge(); }, onErrFor('vzone')); VZ.zun=un; UNSUBS.push(un); }
+      }
+    }
+    merge(); }, onErrFor('volunteers')));
+}
 async function fbVolLogin(code, pin){
   code=String(code||'').trim(); pin=String(pin||'').trim();
   if(!S.config) { toast('الفعالية لم تُجهز بعد','warn'); return false; }
@@ -4021,6 +4041,10 @@ async function boot(){
   try{ DB.settings({ignoreUndefinedProperties:true, experimentalAutoDetectLongPolling:true, merge:true}); }catch{}
   try{ await DB.enablePersistence({synchronizeTabs:true}); }catch{}
   S.mode='db';
+  /* إصلاح تلقائي: لو علّق التحميل 12 ثانية، نمسح الذاكرة المحفوظة ونعيد الفتح مرة وحدة */
+  setTimeout(async ()=>{ if(S.ready) return; let n=0; try{ n=+sessionStorage.getItem('vpFix')||0; }catch{} if(n>=1) return;
+    try{ sessionStorage.setItem('vpFix', String(n+1)); }catch{}
+    try{ await DB.terminate(); }catch{} try{ await DB.clearPersistence(); }catch{} location.reload(); }, 12000);
   firebase.auth().onAuthStateChanged(async user=>{
     stopListeners(); S.ready=false;
     AUTH.user=user; AUTH.volCode=null;
