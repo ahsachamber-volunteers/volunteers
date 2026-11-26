@@ -3981,6 +3981,7 @@ function startListeners(role){
     if(e && e.code==='permission-denied' && role==='vol' && col!=='volunteers'){ console.warn('rules: no read access to', col); RULES_MISS.add(col); scheduleRender(); return; }
     if(e && e.code==='permission-denied' && role==='vol'){ VOL_RETRY=(VOL_RETRY||0)+1;
       if(VOL_RETRY<=4){ setTimeout(async ()=>{ let ok=false; try{ const u=firebase.auth().currentUser; if(u){ const sn=await DB.collection('sessions').doc(u.uid).get({source:'server'}); ok=sn.exists; } }catch{ ok=true; }
+          if(!ok && AUTH.volCode && AUTH.volPin){ try{ const u=firebase.auth().currentUser; await DB.collection('sessions').doc(u.uid).set({code:AUTH.volCode, pinHash:pinHash(AUTH.volPin, AUTH.volCode), at:now()}); ok=true; }catch{} }
           if(ok && AUTH.volCode){ stopListeners(); startListeners('vol'); scheduleRender(); } else if(!ok){ AUTH.volCode=null; toast('انتهت جلستك، سجّل دخولك من جديد','warn'); fbLogout(); } }, 1500*VOL_RETRY); }
       else { VOL_RETRY=0; AUTH.volCode=null; toast('تعذّر الدخول، سجّل دخولك من جديد','warn'); fbLogout(); }
       scheduleRender(); return; }
@@ -3999,7 +4000,7 @@ function startListeners(role){
       invalidate(); scheduleRender(); }, onErrFor(c)));
   });
 }
-let PAY_SUB=false, PROF_LOADED=false; const RULES_MISS=new Set(); let VOL_RETRY=0;
+let PAY_SUB=false, PROF_LOADED=false; const RULES_MISS=new Set(); let VOL_RETRY=0, LOGIN_BUSY=false;
 /* توفير القراءات: المتطوع يسمع لنفسه ولزونه وسجلاته فقط بدل الكل */
 let VZ={me:{}, zone:{}, zid:null, zun:null};
 function volListeners(onErrFor){
@@ -4023,13 +4024,14 @@ async function fbVolLogin(code, pin){
   code=String(code||'').trim(); pin=String(pin||'').trim();
   if(!S.config) { toast('الفعالية لم تُجهز بعد','warn'); return false; }
   const auth=firebase.auth();
+  LOGIN_BUSY=true;
   try{
     if(!auth.currentUser || !auth.currentUser.isAnonymous){ await auth.signOut().catch(()=>{}); await auth.signInAnonymously(); }
     const ref=DB.collection('sessions').doc(auth.currentUser.uid);
     await ref.delete().catch(()=>{});
     await ref.set({code, pinHash:pinHash(pin, code), at:now()});
-  }catch(e){ toast('الرقم أو الرمز غير صحيح','crit'); return false; }
-  AUTH.volCode=code; stopListeners(); startListeners('vol'); scheduleRender(); return true;
+  }catch(e){ LOGIN_BUSY=false; toast(e&&String(e.code||'').startsWith('auth/')?'تعذّر الاتصال، جرّب بعد دقيقة':'الرقم أو الرمز غير صحيح','crit'); return false; }
+  AUTH.user=auth.currentUser; AUTH.volCode=code; AUTH.volPin=pin; VOL_RETRY=0; stopListeners(); startListeners('vol'); scheduleRender(); setTimeout(()=>{ LOGIN_BUSY=false; }, 3000); return true;
 }
 async function fbLogout(){
   const auth=firebase.auth(); const u=auth.currentUser;
@@ -4050,6 +4052,7 @@ async function boot(){
     try{ sessionStorage.setItem('vpFix', String(n+1)); }catch{}
     try{ await DB.terminate(); }catch{} try{ await DB.clearPersistence(); }catch{} location.reload(); }, 12000);
   firebase.auth().onAuthStateChanged(async user=>{
+    if(LOGIN_BUSY){ AUTH.user=user; return; }
     stopListeners(); S.ready=false;
     AUTH.user=user; AUTH.volCode=null;
     AUTH.admin = !!(user && user.email) && await probeAdmin();
