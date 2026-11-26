@@ -1,0 +1,24 @@
+<!doctype html><html lang="ar" dir="rtl"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>فحص المنصة</title><body style="font:18px system-ui;padding:24px;background:#fafafa"><h2>فحص اتصال المنصة</h2><p>فحص قراءة فقط باستخدام الجلسة الحالية. لا يعرض بيانات المتطوعين.</p><button id="run" style="padding:15px">ابدأ الفحص</button><pre id="out" dir="ltr" style="white-space:pre-wrap"></pre><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script><script>const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyB5bIyWsIb9-omLIPyOrmm5fpljHZUD4vU",
+  authDomain: "volunteers-event.firebaseapp.com",
+  projectId: "volunteers-event",
+  storageBucket: "volunteers-event.firebasestorage.app",
+  messagingSenderId: "567473689160",
+  appId: "1:567473689160:web:302bec0e9188889803fe7d"
+};
+const out=document.getElementById('out');
+function log(t){out.textContent+=t+'\n';}
+function timed(p){return Promise.race([p,new Promise((_,reject)=>setTimeout(()=>reject(new Error('TIMEOUT 20s')),20000))]);}
+async function test(){document.getElementById('run').disabled=true;try{
+ firebase.initializeApp(FIREBASE_CONFIG);const auth=firebase.auth();const db=firebase.firestore();
+ await timed(new Promise((resolve,reject)=>{auth.onAuthStateChanged(resolve,reject);}));
+ if(!auth.currentUser){log('No existing session; stopping. Open platform first.');return;}
+ log('AUTH OK: '+(auth.currentUser.isAnonymous?'anonymous':'email'));
+ const token=await timed(auth.currentUser.getIdToken());log('TOKEN OK');
+ const url='https://firestore.googleapis.com/v1/projects/'+FIREBASE_CONFIG.projectId+'/databases/(default)/documents/config/main';
+ await Promise.all([ (async()=>{try{const r=await timed(fetch(url,{headers:{Authorization:'Bearer '+token},cache:'no-store'}));log('REST HTTP '+r.status);if(!r.ok){const j=await r.json();log('REST '+(j.error?.status||''));}}catch(e){log('REST ERROR '+(e.code||e.message));}})(),(async()=>{try{const d=await timed(db.doc('config/main').get({source:'server'}));log('SDK '+(d.exists?'OK':'NOT FOUND'));}catch(e){log('SDK ERROR '+(e.code||e.message));}})()]);
+ }catch(e){log('ERROR '+(e.code||e.message));}finally{log('DONE');}}
+ document.getElementById('run').onclick=test;
+</script></body></html>
