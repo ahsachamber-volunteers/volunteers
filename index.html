@@ -2345,7 +2345,7 @@ function render(){
   checkGlory();
 }
 function view(){
-  if(!S.ready) return `<div class="loader"><div class="spin"></div><div>${S.slow ? 'تعذّر الوصول للبيانات حتى الآن، تحقق من الاتصال…' : 'جارٍ تحميل المنصة…'}</div></div>`;
+  if(!S.ready) return `<div class="loader"><div class="spin"></div><div>${S.slow ? 'تعذّر الوصول للبيانات حتى الآن، تحقق من الاتصال…' : 'جارٍ تحميل المنصة…'}</div><div class="tiny muted" style="margin-top:8px" dir="ltr">${esc(window.LOADSTEP||'')}</div>${(window.LOADT&&Date.now()-window.LOADT>15000)?`<button class="btn" style="margin-top:12px" onclick="location.reload()">إعادة المحاولة</button>`:''}</div>`;
   if(THX) return thanksPage();
   const ses=getSes();
   if(!S.config){ if(FB_ON && !AUTH.admin) return landingView(); return setupView(); }
@@ -3987,7 +3987,8 @@ function startListeners(role){
       scheduleRender(); return; }
     else if(e && e.code!=='permission-denied') toast('انقطع الاتصال بالبيانات. أعد فتح الصفحة.','crit');
     scheduleRender(); };
-  const onErr = e=>{ AUTH.err=(e&&e.code)||'config'; onErrFor('config')(e); };
+  const onErr = e=>{ window.LOADSTEP='ERR config '+((e&&e.code)||''); AUTH.err=(e&&e.code)||'config'; onErrFor('config')(e); };
+  window.LOADSTEP=(window.LOADSTEP||'')+' · 6 waiting config ('+role+')';
   UNSUBS.push(DB.doc('config/main').onSnapshot({includeMetadataChanges:true}, sn=>{ if(!sn.exists && sn.metadata.fromCache) return; S.config = sn.exists ? sn.data() : null; AUTH.err=null; clearTimeout(slowT); S.ready=true; S.slow=false; invalidate(); scheduleRender(); }, onErr));
   if(role==='guest') return;
   COLS.forEach(c=>{
@@ -4042,9 +4043,10 @@ async function boot(){
   render();
   browserCaps();
   if(!FB_ON){ S.mode='local'; loadLocal(); S.ready=true; render(); return; }
+  window.LOADT=Date.now(); window.LOADSTEP='1 init'; setInterval(()=>{ if(!S.ready) scheduleRender(); }, 3000);
   firebase.initializeApp(FIREBASE_CONFIG);
   DB=firebase.firestore();
-  try{ DB.settings({ignoreUndefinedProperties:true, experimentalAutoDetectLongPolling:true, merge:true}); }catch{}
+  try{ DB.settings({ignoreUndefinedProperties:true, experimentalForceLongPolling:true, merge:true}); }catch{}
   /* بدون ذاكرة محفوظة: كانت تعلّق سفاري بعد انقطاع الحصة */
   try{ indexedDB.deleteDatabase('firestore/[DEFAULT]/volunteers-event/main'); }catch{}
   S.mode='db';
@@ -4054,13 +4056,14 @@ async function boot(){
     location.reload(); }, 15000);
   firebase.auth().onAuthStateChanged(async user=>{
     if(LOGIN_BUSY){ AUTH.user=user; return; }
+    window.LOADSTEP='2 auth '+(user?(user.isAnonymous?'anon':'email'):'none');
     stopListeners(); S.ready=false;
     AUTH.user=user; AUTH.volCode=null;
     AUTH.admin = !!(user && user.email) && await probeAdmin();
-    if(!user){ try{ await firebase.auth().signInAnonymously(); }catch(e){ AUTH.err=(e&&e.code)||'auth'; S.ready=true; S.slow=true; scheduleRender(); } return; }
+    if(!user){ window.LOADSTEP='3 signing in'; try{ await firebase.auth().signInAnonymously(); }catch(e){ window.LOADSTEP='ERR '+((e&&e.code)||'auth'); AUTH.err=(e&&e.code)||'auth'; S.ready=true; S.slow=true; scheduleRender(); } return; }
     if(AUTH.admin){ startListeners('admin'); scheduleRender(); return; }
     if(user.email){ await firebase.auth().signOut(); return; }
-    try{ const sn=await DB.collection('sessions').doc(user.uid).get(); if(sn.exists){ let stale=false; try{ const cf=await DB.doc('config/main').get(); stale=!cf.exists || (cf.data().createdAt||0) > (sn.data().at||0); }catch{} if(stale){ await sn.ref.delete().catch(()=>{}); } else { AUTH.volCode=sn.data().code; startListeners('vol'); scheduleRender(); return; } } }catch{}
+    window.LOADSTEP='4 session check'; try{ const sn=await DB.collection('sessions').doc(user.uid).get(); window.LOADSTEP='5 session '+(sn.exists?'yes':'no'); if(sn.exists){ let stale=false; try{ const cf=await DB.doc('config/main').get(); stale=!cf.exists || (cf.data().createdAt||0) > (sn.data().at||0); }catch{} if(stale){ await sn.ref.delete().catch(()=>{}); } else { AUTH.volCode=sn.data().code; startListeners('vol'); scheduleRender(); return; } } }catch{}
     startListeners('guest'); scheduleRender();
   });
 }
