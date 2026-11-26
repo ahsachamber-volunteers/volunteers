@@ -620,7 +620,7 @@ body:has(.wall.nb) #wall-fx .glow{display:none}
 .nb-clock div{font-size:.8em;color:#d9bfa9}
 .nb-link,.nb-al{background:none;border:0;color:#d9bfa9;font:inherit;cursor:pointer;text-decoration:underline;text-underline-offset:3px;padding:0}
 .nb-al{color:#fca5a5;font-weight:700}
-.nb-mid{display:grid;grid-template-columns:1.15fr 1fr;align-items:center;gap:30px;padding-top:1.5em}
+.nb-mid{display:grid;grid-template-columns:1.15fr 1fr;align-items:center;gap:30px;padding-top:.6em}
 .nb-story{display:grid;gap:.8em;align-content:center}
 .nb-slide{display:grid;gap:.8em;min-height:12em;align-content:center}
 .nb-slide.enter{animation:spin .8s cubic-bezier(.2,.8,.2,1)}
@@ -646,7 +646,7 @@ body:has(.wall.nb) #wall-fx .glow{display:none}
 .nb-nums span{font-size:.9em;color:#d9bfa9;margin-top:.25em}
 .nb-dots{display:flex;gap:6px;margin-top:.6em}
 .nb-dots i{width:7px;height:7px;border-radius:50%;background:#F7EBDD33}.nb-dots i.on{width:20px;border-radius:9px;background:#E8B07A}
-.nb-art{position:relative;height:min(60vh,620px)}
+.nb-art{position:relative;height:min(50vh,560px)}
 .nb-glow{position:absolute;height:88%;aspect-ratio:1;left:50%;top:50%;translate:-50% -50%;border-radius:50%;background:radial-gradient(circle,#c98a5a66 0%,#7a2a1c55 45%,transparent 70%)}
 .wall .palm{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
 .palm .fr{transform-box:view-box;transform-origin:205px 176px;transition:opacity 1s,filter 1s}
@@ -738,6 +738,35 @@ body:has(.wall.nb) #wall-fx .fb{fill:#d9b38c!important}
 .lead-chip b{display:block;font-size:.9rem}
 .lead-banner{display:grid;gap:2px;text-align:center;padding:12px;border-radius:14px;background:linear-gradient(135deg,#C9A27E,#e7c9a8);color:#2b0b10}
 .lead-banner b{font-family:var(--font-display);font-size:1.1rem}
+
+.staff-row{display:grid;gap:6px;border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.pray-card{display:grid;gap:8px;padding:14px;border-radius:16px;background:var(--sheen);color:#fff;border:1px solid var(--cu)}
+.pray-card .pill{background:rgba(255,255,255,.14);color:#fff}
+.pray-t{font-size:1rem}.pray-t.late{color:#fecaca;font-weight:700}
+
+.ping-card{display:grid;gap:10px;padding:16px;border-radius:16px;background:#fde68a;color:#3a1018;border:2px solid #f59e0b;animation:pingp 1.2s ease-in-out infinite}
+.ping-card b{font-size:1.15rem;font-family:var(--font-display)}
+.ping-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.ping-btns .btn{background:#fff;color:#3a1018;border-color:#f59e0b;min-height:48px;font-weight:700}
+@keyframes pingp{50%{box-shadow:0 0 0 6px #f59e0b55}}
+.viol{border:1px solid var(--warn);background:var(--warn-soft);border-radius:12px;padding:10px 12px;display:grid;gap:4px}
+.viol.hi{border-color:var(--crit);background:var(--crit-soft)}
+.roll-item{padding:6px 4px;border-bottom:1px dashed var(--line)}
+.al-open{border-inline-start:4px solid var(--crit)}.al-work{border-inline-start:4px solid var(--warn)}.al-done{opacity:.75}
+
+.nb-spot{display:flex;gap:1.2em;align-items:center}
+.av.nb-spot-av{width:7.5em;height:7.5em;border-radius:50%;font-size:2em;box-shadow:0 0 0 4px #E8B07A,0 0 40px #E8B07A66;flex:none}
+.nb-spot .av.nb-spot-av{font-size:1em;width:9em;height:9em}
+.nb-cheer{font-family:var(--font-display);font-weight:600;font-size:1.4em;color:#E8B07A;margin-top:.3em}
+.nb-team{overflow:hidden;margin:.4em -56px 0;mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent)}
+.nb-team-in{display:flex;gap:1.4em;width:max-content;animation:nbscroll linear infinite;padding:.4em 0}
+@keyframes nbscroll{from{transform:translateX(0)}to{transform:translateX(50%)}}
+.nb-tm{display:flex;flex-direction:column;align-items:center;gap:.25em}
+.nb-tm b{font-size:.85em;color:#f3e6dc;font-weight:600}
+.av.nb-tm-av{width:3em;height:3em;border-radius:50%;font-size:.9em;box-shadow:0 0 0 2px #E8B07A}
+.nb-live{display:flex;align-items:center;gap:.5em;justify-content:center;font-size:1.05em;color:#f3e6dc;margin-top:.4em;animation:spin .7s ease}
+.nb-live .dot{width:.6em;height:.6em;border-radius:50%;background:#4ade80;box-shadow:0 0 0 0 #4ade80;animation:dotp 1.6s infinite}
+@media (prefers-reduced-motion:reduce){.nb-team-in{animation:none}}
 </style>
 </head>
 <body>
@@ -894,6 +923,10 @@ const LOG_T = {
   move:{t:'نُقل', i:'move', c:'info'},
   energy:{t:'سجّل مستوى طاقته', i:'bolt', c:'info'},
   mini:{t:'أخذ استراحة قصيرة', i:'coffee', c:'ok'},
+  prayer_out:{t:'طلع للصلاة', i:'out', c:'info'},
+  ping_miss:{t:'ما رد على وينك', i:'alert', c:'crit'},
+  roll:{t:'سجّل تفقّد الفريق', i:'check', c:'info'},
+  prayer_in:{t:'رجع من الصلاة', i:'check', c:'ok'},
 };
 
 /* ============ أدوات ============ */
@@ -974,11 +1007,13 @@ function idx(){
   return IDX;
 }
 const cfg = () => S.config || {};
-const zones = () => cfg().zones || [];
-const zoneById = id => zones().find(z=>z.id===id);
+const allZones = () => cfg().zones || [];
+const zones = () => { const m=typeof myZoneSet==='function'?myZoneSet():null; const z=allZones(); return m? z.filter(x=>m.has(x.id)) : z; };
+const zoneById = id => allZones().find(z=>z.id===id);
 const zColor = id => zoneById(id)?.color || 'var(--idle)';
 const zName = id => zoneById(id)?.name || 'غير موزّع';
-const vols = () => Object.entries(S.volunteers).map(([id,v])=>({...v,id}));
+const allVols = () => Object.entries(S.volunteers).map(([id,v])=>({...v,id}));
+const vols = () => { const m=typeof myZoneSet==='function'?myZoneSet():null; const a=allVols(); return m? a.filter(v=>m.has(v.zone)) : a; };
 function workedSince(vid, since, until=Infinity){
   const L = idx().byV[vid] || []; let total=0, start=null;
   for(const l of L){
@@ -1023,10 +1058,11 @@ function gamiCalc(vid){
   const crowdMoves=L.filter(l=>l.type==='move' && (l.crowd??0)>=2).length; add('crowd','دعم زون مزدحم', crowdMoves*PTS.crowd);
   const praise=notes.filter(n=>n.kind==='praise'); add('praise','إشادات المشرف', praise.length*PTS.praise);
   add('star','نجوم التقييم', notes.filter(n=>n.stars && n.kind!=='warn').reduce((t,n)=>t+n.stars,0)*PTS.star);
-  const reports=Object.values(S.alerts).filter(a=>a.by===vid && a.resolved).length; add('report','بلاغات مفيدة', reports*PTS.report);
+  const reports=Object.values(S.alerts).filter(a=>a.by===vid && a.resolved && !opsAlert(a)).length; add('report','بلاغات مفيدة', reports*PTS.report);
   const awards=notes.filter(n=>n.kind==='award'); awards.forEach(a=>add('award','مكافأة: '+a.title, a.pts||0));
   const foundL=Object.values(S.lost).filter(x=>x.status==='found' && x.foundBy===vid);
   add('finder','العثور على مفقودين', foundL.length*PTS.finder);
+  const prayOk=L.filter(l=>l.type==='prayer_in' && !l.late).length; add('prayer','الرجوع من الصلاة في الوقت', prayOk*PTS.ontime);
   const thx=thanksOf(vid); const perDay={}; let thxCount=0; thx.forEach(t=>{ const d=dayStart(t.at); perDay[d]=(perDay[d]||0)+1; if(perDay[d]<=5) thxCount++; });
   add('visitor','شكر الزوار', thxCount*PTS.visitor);
   const myM=Object.values(S.missions).filter(m=>m.status==='done' && (m.takers||[]).includes(vid));
@@ -1062,7 +1098,7 @@ function gamiCalc(vid){
     level:LEVELS[li], li, next, prog: next ? (p-LEVELS[li].min)/(next.min-LEVELS[li].min) : 1};
 }
 function thanksOf(vid){ const c=String(S.volunteers[vid]?.code??''); if(!c) return []; return Object.values(S.thanks).filter(t=>String(t.code)===c).sort((a,b)=>b.at-a.at); }
-function leaderboard(){ return vols().map(v=>({v, g:gami(v.id)})).sort((a,b)=>b.g.p-a.g.p || b.g.w-a.g.w); }
+function leaderboard(){ return vols().filter(v=>!zAttendOnly(v.zone)).map(v=>({v, g:gami(v.id)})).sort((a,b)=>b.g.p-a.g.p || b.g.w-a.g.w); }
 const levelPill = l => `<span class="pill nodot" style="background:${l.c}22;color:${l.c}">${ic('trophy','icon" style="width:13px;height:13px')} ${l.t}</span>`;
 function sticker(b, on=true, size=54){
   const lbl = `<span class="tiny" style="font-weight:600;${on?'':'color:var(--muted)'}">${esc(b.t)}</span>`;
@@ -1106,8 +1142,8 @@ function zoneStats(){
 }
 function suggestions(){
   const st = zoneStats();
-  const recv = st.filter(s=>s.gap>0).sort((a,b)=>(b.z.crowd??1)-(a.z.crowd??1) || b.gap-a.gap);
-  const donors = st.filter(s=>s.gap<0).map(s=>({zid:s.z.id, crowd:s.z.crowd??1, surplus:-s.gap,
+  const recv = st.filter(s=>s.gap>0 && zoneGrp(s.z)!=='lock').sort((a,b)=>(b.z.crowd??1)-(a.z.crowd??1) || b.gap-a.gap);
+  const donors = st.filter(s=>s.gap<0 && zoneGrp(s.z)!=='lock').map(s=>({zid:s.z.id, crowd:s.z.crowd??1, surplus:-s.gap,
     pool:s.active.filter(v=>v.role!=='قائد فريق').sort((a,b)=>(a.zoneAt||0)-(b.zoneAt||0))}));
   const loose = vols().filter(v=>v.status==='active' && !zoneById(v.zone));
   if(loose.length) donors.unshift({zid:'', crowd:-1, surplus:loose.length, pool:loose});
@@ -1115,7 +1151,7 @@ function suggestions(){
   for(const r of recv){
     let need=r.gap;
     while(need>0){
-      const d = donors.filter(d=>d.surplus>0 && d.pool.length && d.crowd < (r.z.crowd??1)+1).sort((a,b)=>a.crowd-b.crowd || b.surplus-a.surplus)[0];
+      const d = donors.filter(d=>d.surplus>0 && d.pool.length && d.crowd < (r.z.crowd??1)+1 && (d.zid==='' || sameGrp(d.zid, r.z.id))).sort((a,b)=>a.crowd-b.crowd || b.surplus-a.surplus)[0];
       if(!d) break;
       const v=d.pool.shift(); d.surplus--; need--;
       moves.push({vid:v.id, from:d.zid, to:r.z.id});
@@ -1124,9 +1160,9 @@ function suggestions(){
   return moves;
 }
 function pullCandidates(toZone, n){
-  const target = zoneById(toZone); const tc = target?.crowd??1;
+  const target = zoneById(toZone); const tc = target?.crowd??1; if(attendOnly(target)) return [];
   const st = Object.fromEntries(zoneStats().map(s=>[s.z.id,s]));
-  const cand = vols().filter(v=>v.status==='active' && v.zone!==toZone && v.role!=='قائد فريق')
+  const cand = vols().filter(v=>v.status==='active' && v.zone!==toZone && v.role!=='قائد فريق' && (!zoneById(v.zone) || sameGrp(v.zone, toZone)))
     .map(v=>{ const s=st[v.zone]; return {v, crowd: s? (s.z.crowd??1) : -1, surplus: s? -s.gap : 99}; })
     .filter(c=>c.crowd < tc)
     .sort((a,b)=> b.surplus-a.surplus || a.crowd-b.crowd);
@@ -1337,7 +1373,7 @@ function wallSpot(){
 function wallFx(on){
   let fx=$('#wall-fx');
   if(!on){ if(fx) fx.remove(); if(WALL.t){ clearInterval(WALL.t); WALL.t=null; } return; }
-  if(!WALL.t) WALL.t=setInterval(()=>{ WALL.i++; scheduleRender(); }, 9000);
+  if(!WALL.t) WALL.t=setInterval(()=>{ WALL.i++; scheduleRender(); }, 7000);
   if(fx) return;
   fx=document.createElement('div'); fx.id='wall-fx'; fx.setAttribute('aria-hidden','true');
   fx.innerHTML=Array.from({length:9},(_,k)=>`<span class="fb" style="--x:${(k*11+7)%96}%;--d:${16+(k*7)%14}s;--dl:-${(k*5)%17}s;--s:${.6+(k%4)*.25}">${BFLY}</span>`).join('')+'<div class="glow g1"></div><div class="glow g2"></div>';
@@ -1353,20 +1389,21 @@ function countUp(){
 const FRONDS=[
   {d:'M205 175 C150 110, 90 112, 40 160 C95 140, 150 150, 205 175z', v:'M200 172 C150 140, 100 140, 55 157'},
   {d:'M205 175 C255 110, 315 112, 365 160 C310 140, 255 150, 205 175z', v:'M210 172 C260 140, 310 140, 350 157'},
-  {d:'M205 172 C170 120, 165 80, 190 40 C195 90, 205 130, 205 172z', v:''},
-  {d:'M205 172 C240 120, 245 80, 222 38 C214 90, 206 130, 205 172z', v:''},
+  {d:'M205 172 C158 128, 138 88, 148 48 C172 92, 192 132, 205 172z', v:''},
+  {d:'M205 172 C252 128, 272 88, 262 48 C238 92, 218 132, 205 172z', v:''},
   {d:'M205 178 C150 170, 95 205, 70 262 C120 225, 165 205, 205 178z', v:'M198 178 C150 185, 110 215, 85 250'},
   {d:'M205 178 C260 170, 315 205, 340 262 C290 225, 245 205, 205 178z', v:'M212 178 C260 185, 300 215, 325 250'},
+  {d:'M205 172 C186 128, 188 78, 205 30 C222 78, 224 128, 205 172z', v:'M205 165 L205 44'},
 ];
 function palmSvg(st){
   const fr=FRONDS.map((f,i)=>{ const s=st[i]; const col=s?s.z.color:'#c98a5a'; const cls=!s?'f-idle':(s.z.crowd??1)>=3&&s.gap>0?'f-crowd':s.gap>0?'f-short':'f-ok';
     return `<g class="fr ${cls}" style="--d:${(i*0.7).toFixed(1)}s"><path d="${f.d}" fill="${esc(col)}"/>${f.v?`<path d="${f.v}" stroke-width="1.6" opacity=".7"/>`:''}</g>`; }).join('');
   const B='<path d="M31 24C27 10 16 1 8 3 1 5 2 15 8 20c5 4 14 5 23 4zM33 24C37 10 48 1 56 3c7 2 6 12 0 17-5 4-14 5-23 4zM31 26c-9 0-17 3-18 10-1 6 5 10 10 7 4-3 7-10 8-17zM33 26c9 0 17 3 18 10 1 6-5 10-10 7-4-3-7-10-8-17z"/>';
-  return `<svg class="palm" viewBox="0 0 400 560" fill="none" stroke="#F7EBDD" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+  return `<svg class="palm" viewBox="0 -40 400 600" fill="none" stroke="#F7EBDD" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
     <defs><filter id="rough"><feTurbulence type="fractalNoise" baseFrequency=".035" numOctaves="2" seed="4"/><feDisplacementMap in="SourceGraphic" scale="3.5"/></filter></defs>
     <g filter="url(#rough)">
-      <g class="rays"><path d="M200 30v-22M160 42l-12-16M240 42l12-16M128 70l-18-8M272 70l18-8"/></g>
-      <circle class="bud" cx="200" cy="78" r="13" fill="#5AA469"/>
+      <g class="rays"><path d="M206 -6v-22M166 6l-12-16M246 6l12-16M134 34l-18-8M278 34l18-8"/></g>
+      <circle class="bud" cx="206" cy="20" r="12" fill="#5AA469"/>
       <path d="M196 540 C190 430, 210 330, 200 175" stroke-width="3.6"/><path d="M208 540 C203 430, 221 330, 210 178" stroke-width="2.4" opacity=".6"/>
       <path d="M194 510l16 -4M194 478l18-4M196 446l18-4M198 414l18-4M200 382l18-4M202 350l16-4M203 318l16-4M204 286l15-4M204 254l14-4M204 222l12-3"/>
       ${fr}
@@ -1386,7 +1423,13 @@ function nbSlides(){
   thx.slice(0,3).forEach(t=>{ const v=findByCode(t.code); if(v) out.push(`<div class="nb-k">💚 من قلب زائر</div><div class="nb-q">«${esc(t.msg||'شكراً لك من القلب')}»</div><div class="nb-who">${avatar(v.id,'av nb-av')}<span>إلى <b>${esc(v.name)}</b>${v.zone?` · ${esc(zName(v.zone))}`:''}</span>${t.stars?`<span class="nb-st">${'★'.repeat(t.stars)}</span>`:''}</div>`); });
   if(lb.length) out.push(`<div class="nb-k">🏆 نجوم الفعالية</div><div class="nb-top">${lb.map((x,i)=>`<div class="nb-p ${i===0?'first':''}">${avatar(x.v.id,'av nb-pav')}<b>${esc(firstName(x.v.name))}</b><span class="num">${x.g.p}</span>${i<3?`<i>${['🥇','🥈','🥉'][i]}</i>`:''}</div>`).join('')}</div>`);
   if(longest) out.push(`<div class="nb-k">⏱️ الأطول عطاءً اليوم</div><div class="nb-q">${esc(longest.v.name)}</div><div class="nb-who">${avatar(longest.v.id,'av nb-av')}<span><b class="num">${fmtDur(longest.w)}</b> من العطاء${longest.v.zone?` في ${esc(zName(longest.v.zone))}`:''}</span></div>`);
-  out.push(`<div class="nb-k">✨ رسالة اليوم</div><div class="nb-q">كل ابتسامة منكم<br>تصنع ذكرى لزائر 🤎</div><div class="nb-who"><span>شكراً لكل متطوع في ${esc(cfg().eventName||'الفعالية')}</span></div>`);
+  const present=allVols().filter(v=>(v.status==='active'||v.status==='break') && !zAttendOnly(v.zone));
+  const withPh=present.filter(v=>profOf(v.id)?.photo); const pool=(withPh.length>=3?withPh:present);
+  const seed=Math.floor(now()/60000); const picks=[]; for(let k=0;k<Math.min(3,pool.length);k++) picks.push(pool[(seed*7+k*13)%pool.length]);
+  const CHEER=['وجودك يفرق 🌟','شكراً على عطائك 🤎','بطل اليوم 💪','ابتسامتك واجهة الفعالية 😊','نفخر فيك 👏','فريقك يعتمد عليك 🌴'];
+  [...new Set(picks)].forEach((v,k)=>{ const ds=dayStart(); const w=workedSince(v.id, ds); out.push(`<div class="nb-k">🌟 في دائرة الضوء</div><div class="nb-spot">${avatar(v.id,'av nb-spot-av')}<div><div class="nb-q">${esc(v.name)}</div><div class="nb-who"><span>${esc(zName(v.zone))}${w>60000?` · <b class="num">${fmtDur(w)}</b> عطاء اليوم`:''}</span></div><div class="nb-cheer">${CHEER[(seed+k)%CHEER.length]}</div></div></div>`); });
+  const MOTIV=['كل ابتسامة منكم<br>تصنع ذكرى لزائر 🤎','العطاء ما يُقاس بالساعات<br>يُقاس بالأثر 🌴','أنتم أصالة الشرق<br>الحقيقية ✨','خلف كل زائر سعيد<br>متطوع مخلص 💛','نجاح الفعالية<br>يبدأ منكم 🌟','شكراً لأنكم هنا<br>اليوم وكل يوم 🤍'];
+  out.push(`<div class="nb-k">✨ رسالة لكم</div><div class="nb-q">${MOTIV[Math.floor(now()/60000)%MOTIV.length]}</div><div class="nb-who"><span>فريق ${esc(cfg().eventName||'الفعالية')}</span></div>`);
   return out;
 }
 function wallView(){
@@ -1396,7 +1439,7 @@ function wallView(){
   const today=all.filter(v=>(idx().byV[v.id]||[]).some(l=>l.type==='in' && l.at>=dayStart())).length;
   const days=Math.max(1,new Set(Object.values(S.logs).filter(l=>l.type==='in').map(l=>dayKey(l.at))).size); const total=+(c.eventDays)||10;
   const sl=nbSlides(); const i=WALL.i%sl.length; const fresh=WALL.shown!==WALL.i; WALL.shown=WALL.i;
-  const alerts=Object.values(S.alerts).filter(a=>!a.resolved).length; const em=c.emergency;
+  const alerts=Object.values(S.alerts).filter(a=>!a.resolved && !opsAlert(a)).length; const em=c.emergency;
   const stripe=(st.length?st.map(s=>s.z.color):['#8B5A3C','#2E7D73','#E0A526','#D9692E','#B8364A','#7A4E9A']);
   return `<div class="wall nb">
     <div class="nb-top-bar">
@@ -1419,6 +1462,8 @@ function wallView(){
       </div>
       <div class="nb-art"><div class="nb-glow"></div>${palmSvg(st)}</div>
     </div>
+    ${(()=>{ const pr=allVols().filter(v=>v.status==='active'||v.status==='break'); if(!pr.length) return ''; const items=pr.map(v=>`<span class="nb-tm">${avatar(v.id,'av nb-tm-av')}<b>${esc(firstName(v.name))}</b></span>`).join(''); const dur=Math.max(25, pr.length*2.2); return `<div class="nb-team" data-sig="${esc(pr.map(v=>v.id+(profOf(v.id)?.photo?'p':'')).join(','))}" aria-label="فريق اليوم"><div class="nb-team-in" style="animation-duration:${dur}s">${items}${items}</div></div>`; })()}
+    ${(()=>{ const ev=Object.values(S.logs).filter(l=>['in','break_end','prayer_in','mini'].includes(l.type) && now()-l.at<15*60000).sort((a,b)=>b.at-a.at).slice(0,1)[0]; const th=Object.values(S.thanks).filter(t=>now()-t.at<15*60000).sort((a,b)=>b.at-a.at)[0]; const nm=id=>firstName(S.volunteers[id]?.name||''); const txt= th&&(!ev||th.at>ev.at) ? `💚 زائر شكر ${esc(firstName(findByCode(th.code)?.name||''))} الحين` : ev ? ({in:`👋 وصل ${esc(nm(ev.v))} وانضم للفريق`, break_end:`☕ رجع ${esc(nm(ev.v))} من الاستراحة`, prayer_in:`🕌 رجع ${esc(nm(ev.v))} من الصلاة`, mini:`☕ ${esc(nm(ev.v))} ياخذ نفَس قصير`})[ev.type] : ''; return txt?`<div class="nb-live" key="${ev?.at||th?.at}"><span class="dot"></span>${txt} <span class="tiny">· ${ago((th&&(!ev||th.at>ev.at))?th.at:ev.at)}</span></div>`:''; })()}
     <div class="nb-zones" style="grid-template-columns:repeat(${Math.max(1,st.length)},1fr)">${st.map(s=>{ const cls=(s.z.crowd??1)>=3&&s.gap>0?'z-crowd':s.gap>0?'z-short':'z-ok'; return `<div class="nb-z ${cls}" style="--c:${esc(s.z.color)}"><h3>${esc(s.z.name)}</h3><div class="nb-n num">${s.active.length}<small> / ${s.need}</small></div><div class="nb-avs">${s.active.slice(0,7).map(v=>avatar(v.id,'av nb-za')).join('')}${s.active.length>7?`<span class="nb-more num">+${s.active.length-7}</span>`:''}</div></div>`; }).join('')}</div>
     <div class="nb-stripe">${stripe.map(col=>`<i style="background:${esc(col)}"></i>`).join('')}</div>
   </div>`;
@@ -1545,9 +1590,9 @@ function pickLeader(z, members){
   return top[Math.floor(Math.random()*top.length)].v;
 }
 async function ensureLeaders(){
-  if(!leadOn() || LEAD_BUSY || getSes()?.role!=='admin' || now()-LEAD_AT<20000) return;
+  if(!leadOn() || LEAD_BUSY || !isFull() || now()-LEAD_AT<20000) return;
   const today=dayKey(); const L=cfg().leaders||{}; const by=L.day===today?{...(L.byZone||{})}:{};
-  const st=zones().map(z=>({z, members:vols().filter(v=>v.zone===z.id)})).filter(x=>x.members.length);
+  const st=zones().filter(z=>!attendOnly(z)).map(z=>({z, members:vols().filter(v=>v.zone===z.id)})).filter(x=>x.members.length);
   const need=st.filter(x=>!by[x.z.id] || !S.volunteers[by[x.z.id]] || S.volunteers[by[x.z.id]].zone!==x.z.id);
   if(L.day===today && !need.length) return;
   LEAD_BUSY=true; LEAD_AT=now();
@@ -1572,14 +1617,188 @@ function leadersCard(){
   return `<section class="card"><div class="card-h"><h2>👑 قادة اليوم</h2><span class="tiny muted">اختيار تلقائي بالتناوب حسب النقاط</span></div><div class="lead-row">${rows.map(x=>`<button class="lead-chip" data-act="open-vol" data-id="${L.byZone[x.z.id]}" style="--zc:${esc(x.z.color)}">${avatar(L.byZone[x.z.id],'av')}<div><b>${esc(x.v.name)}</b><span class="tiny muted">${esc(x.z.name)}</span></div></button>`).join('')}</div></section>`;
 }
 function leaderBanner(vid){ const L=cfg().leaders||{}; if(L.day!==dayKey()) return ''; const z=Object.entries(L.byZone||{}).find(([,id])=>id===vid); if(!z) return ''; return `<div class="lead-banner">👑 <b>أنت قائد ${esc(zName(z[0]))} اليوم!</b><span>تستاهلها بالتزامك، فريقك يعتمد عليك 💪</span></div>`; }
+/* ---------- المشرفات والصلاحيات ---------- */
+const STAFF_DEFAULT = {
+  'shahadu057@gmail.com':{name:'شهد', role:'attend'},
+  'f6omah.11@gmail.com':{name:'فاطمة', role:'hosp'},
+  'latifa.abdullah.32@gmail.com':{name:'لطيفة', role:'zones', zoneNames:['البني','الأخضر','الأصفر']},
+  'saraalshuaibi99@hotmail.com':{name:'سارة', role:'zones', zoneNames:['البرتقالي','الأحمر','البنفسجي','الإعلام']},
+};
+const DALAL = {email:'daq.007@hotmail.com', phone:'0503922228', name:'دلال'};
+const ROLE_T = {full:'لوحة المشرف', attend:'مشرفة الحضور', hosp:'مشرفة الضيافة', zones:'مشرفة الزونات'};
+function myStaff(){ const t=lsGet('roleTest'); if(t && S.mode!=='db') return t; const e=String(AUTH.user?.email||'').toLowerCase(); if(!e) return null; const c=(cfg().staff||{})[e] || STAFF_DEFAULT[e]; return c?{...c,email:e}:null; }
+const ROLE = () => getSes()?.role==='admin' ? (myStaff()?.role||'full') : null;
+const isFull = () => ROLE()==='full';
+function myZoneSet(){
+  if(ROLE()!=='zones') return null; const st=myStaff(); const all=cfg().zones||[];
+  const ids = st.zones?.length ? st.zones : all.filter(z=>(st.zoneNames||[]).some(n=>String(z.name||'').includes(n))).map(z=>z.id);
+  return new Set(ids);
+}
+/* مجموعات التبديل: a = الاستقبال والتذاكر، b = بقية الزونات، lock = ثابت (حضور فقط) */
+function zoneGrp(z){ if(!z) return 'b'; if(z.grp) return z.grp; const n=String(z.name||''); if(/الإعلام|الاعلام|الأزرق|الازرق/.test(n)) return 'lock'; if(/البني|الأخضر|الاخضر|استقبال|تذاكر/.test(n)) return 'a'; return 'b'; }
+const attendOnly = z => !!z && zoneGrp(z)==='lock';
+const zAttendOnly = zid => attendOnly(zoneById(zid));
+const sameGrp = (z1,z2) => { const a=zoneById(z1), b=zoneById(z2); if(!a||!b) return !!(a||b) && zoneGrp(a||b)!=='lock'; return zoneGrp(a)===zoneGrp(b) && zoneGrp(a)!=='lock'; };
+
+/* ---------- الضيافة (فاطمة) ---------- */
+ALERT_T.supply={t:'نقص ضيافة',c:'warn',i:'gift'}; ALERT_T.dalal={t:'طلب لدلال',c:'crit',i:'bell'};
+const OPS_TYPES = ['supply','dalal'];
+const opsAlert = a => OPS_TYPES.includes(a.type);
+function hospDay(){ const h=cfg().hosp||{}; return h.day===dayKey()? h : {day:dayKey()}; }
+function hospView(){
+  const h=hospDay(); const st=zoneStats(); const present=allVols().filter(v=>v.status==='active'||v.status==='break');
+  const sup=Object.entries(S.alerts).filter(([,a])=>a.type==='supply').sort((a,b)=>(a[1].resolved-b[1].resolved)||b[1].at-a[1].at).slice(0,30);
+  const dal=Object.entries(S.alerts).filter(([,a])=>a.type==='dalal').sort((a,b)=>b[1].at-a[1].at).slice(0,10);
+  const item=(k,t)=>{ const v=h[k]; const list=Array.isArray(v)?v:(v?[v]:[]); return `<div class="li"><span class="pill ${list.length?'ok':'idle'} nodot">${list.length?'✓':'—'}</span><div class="grow"><div class="t">${t}</div><div class="s">${list.length?list.map(x=>fmtTime(x)).join(' · '):'لم يتم بعد'}</div></div><button class="btn sm ${list.length?'':'ok'}" data-act="hosp-done" data-k="${k}">${list.length&&!['cleanM','cleanF'].includes(k)?'تحديث الوقت':'تم ✓'}</button></div>`; };
+  return `<div class="section-title"><h2>☕ الضيافة وغرف المتطوعين</h2><span class="tiny muted num">${fmtDay(now())}</span></div>
+  <section class="card"><div class="card-h"><h2>👥 الحاضرين الحين</h2><b class="num">${present.length}</b></div><div class="card-b row">${allZones().map(z=>{ const n=present.filter(v=>v.zone===z.id).length; return `<span class="pill nodot num" style="border:1px solid ${esc(z.color)}"><span class="zdot" style="--zc:${esc(z.color)};display:inline-block;margin-inline-end:6px"></span>${esc(z.name)} ${n}</span>`; }).join('')}</div></section>
+  <section class="card"><div class="card-h"><h2>✅ مهام اليوم</h2></div><div class="list">${item('receive','استلام الضيافة من المندوب')}${item('arrange','ترتيب الضيافة في مكانها')}${item('cleanM','نظافة غرفة المتطوعين')}${item('cleanF','نظافة غرفة المتطوعات')}</div></section>
+  <section class="card"><div class="card-h"><h2>📝 النواقص</h2><button class="btn sm primary" data-act="sup-new">${ic('plus')} ناقص شي</button></div>
+    ${sup.length?`<div class="list">${sup.map(([id,a])=>`<div class="li"><span class="pill ${a.resolved?'ok':'warn'} nodot">${a.resolved?'تم':'ناقص'}</span><div class="grow"><div class="t">${esc(a.text||'')}</div><div class="s">${esc(a.by&&S.volunteers[a.by]?'بلاغ من '+S.volunteers[a.by].name:(a.byName||'الضيافة'))}${a.zone?' · '+esc(zName(a.zone)):''} · ${ago(a.at)}</div></div>${a.resolved?'':`<button class="btn sm ok" data-act="alert-resolve" data-id="${id}">تم التوفير</button>`}</div>`).join('')}</div>`:'<div class="empty small">ما فيه نواقص 👌</div>'}</section>
+  <section class="card"><div class="card-h"><h2>🔔 طلبات لدلال</h2><button class="btn sm" style="color:var(--crit);border-color:var(--crit)" data-act="dalal-new">🔔 تنبيه دلال</button></div>
+    ${dal.length?`<div class="list">${dal.map(([id,a])=>`<div class="li"><span class="pill ${a.resolved?'ok':'crit'} nodot">${a.resolved?'✅ وفّرتها':'بانتظار'}</span><div class="grow"><div class="t">${esc(a.text||'')}</div><div class="s">${ago(a.at)}${a.resolved&&a.resolvedAt?' · انحلت '+fmtTime(a.resolvedAt):''}</div></div></div>`).join('')}</div>`:'<div class="empty small">ما فيه طلبات</div>'}</section>`;
+}
+function dalalCard(){
+  if(!isFull()) return '';
+  const dal=Object.entries(S.alerts).filter(([,a])=>a.type==='dalal' && !a.resolved).sort((a,b)=>b[1].at-a[1].at);
+  const sup=Object.values(S.alerts).filter(a=>a.type==='supply' && !a.resolved).length; const h=hospDay();
+  const newest=dal[0]?.[1]?.at||0; if(newest && newest>(+lsGet('dalSeen')||0)){ lsSet('dalSeen', newest); setTimeout(()=>{ toast('🔔 طلب جديد من الضيافة','crit'); try{ say('طلب جديد من الضيافة'); }catch{} }, 200); }
+  return `${dal.length?`<section class="card" style="border-color:var(--crit)"><div class="card-h"><h2 style="color:var(--crit)">🔔 طلبات الضيافة</h2><span class="pill crit num">${dal.length}</span></div><div class="list">${dal.map(([id,a])=>`<div class="li"><div class="grow"><div class="t">${esc(a.text||'')}</div><div class="s">من ${esc(a.byName||'فاطمة')} · ${ago(a.at)}</div></div><button class="btn sm ok" data-act="alert-resolve" data-id="${id}">تم التوفير ✅</button></div>`).join('')}</div></section>`:''}
+  <section class="card"><div class="card-h"><h2>☕ الضيافة اليوم</h2><button class="btn sm ghost" data-act="tab" data-tab="hosp">التفاصيل</button></div><div class="card-b row small">
+    <span class="pill ${h.receive?'ok':'idle'} nodot">استلام ${h.receive?fmtTime(h.receive):'—'}</span><span class="pill ${h.arrange?'ok':'idle'} nodot">الترتيب ${h.arrange?'✓':'—'}</span>
+    <span class="pill ${(h.cleanM||[]).length?'ok':'idle'} nodot">غرفة المتطوعين ${(h.cleanM||[]).length?fmtTime(h.cleanM.slice(-1)[0]):'—'}</span><span class="pill ${(h.cleanF||[]).length?'ok':'idle'} nodot">غرفة المتطوعات ${(h.cleanF||[]).length?fmtTime(h.cleanF.slice(-1)[0]):'—'}</span>
+    ${sup?`<span class="pill warn nodot num">نواقص ${sup}</span>`:''}</div></section>`;
+}
+
+/* ---------- الصلاة بالتناوب ---------- */
+const PRAYERS = [{k:'maghrib', t:'المغرب'},{k:'isha', t:'العشاء'}];
+const prayCfg = () => ({enabled:true, dur:20, ...(cfg().prayer||{})});
+function sunsetMs(dateMs, lat, lng){
+  const rad=Math.PI/180, d=new Date(dateMs);
+  const jdNoon = Date.UTC(d.getFullYear(), d.getMonth(), d.getDate(), 12)/86400000 + 2440587.5;
+  const n = Math.round(jdNoon - 2451545.0 + 0.0008); const Js = n - lng/360;
+  const M = (357.5291 + 0.98560028*Js) % 360; const C = 1.9148*Math.sin(M*rad) + 0.02*Math.sin(2*M*rad) + 0.0003*Math.sin(3*M*rad);
+  const L = (M + C + 180 + 102.9372) % 360; const Jt = 2451545.0 + Js + 0.0053*Math.sin(M*rad) - 0.0069*Math.sin(2*L*rad);
+  const dec = Math.asin(Math.sin(L*rad)*Math.sin(23.44*rad));
+  const w = Math.acos((Math.sin(-0.833*rad) - Math.sin(lat*rad)*Math.sin(dec))/(Math.cos(lat*rad)*Math.cos(dec)))/rad;
+  return (Jt + w/360 - 2440587.5)*86400000;
+}
+function prayerTime(k, t=now()){
+  const pc=prayCfg(); const ov=(pc.times||{})[k];
+  if(ov && /^\d{1,2}:\d{2}$/.test(ov)){ const [h,m]=ov.split(':').map(Number); const d=new Date(t); d.setHours(h,m,0,0); return d.getTime(); }
+  const g=cfg().geo||{lat:25.3906589,lng:49.5630927}; const mg=Math.round(sunsetMs(dayStart(t)+12*3600000, +g.lat||25.39, +g.lng||49.56)/60000)*60000+60000;
+  return k==='maghrib'? mg : mg+90*60000;
+}
+function prayerNow(){ const pc=prayCfg(); if(!pc.enabled) return null; const dur=(pc.dur||20)*60000;
+  for(const p of PRAYERS){ const T=prayerTime(p.k); if(now()>=T-10*60000 && now()<=T+2*dur+20*60000) return {...p, T, dur, end:T+2*dur+20*60000}; } return null; }
+function prayerPlan(p){
+  const L=cfg().leaders||{}; const leaders=new Set(L.day===dayKey()?Object.values(L.byZone||{}):[]);
+  const out={};
+  for(const z of allZones()){ if(attendOnly(z)) continue;
+    const m=allVols().filter(v=>v.zone===z.id && (v.status==='active'||v.status==='break')).sort((a,b)=>(+a.code)-(+b.code));
+    const lead=m.filter(v=>leaders.has(v.id)); const rest=m.filter(v=>!leaders.has(v.id));
+    const half=Math.ceil(rest.length/2); const A=rest.slice(0,half), B=rest.slice(half);
+    const first=p.k==='maghrib'?A:B, second=(p.k==='maghrib'?B:A).concat(lead);
+    if(!first.length && second.length>1) first.push(second.shift());
+    out[z.id]={first, second}; }
+  return out;
+}
+function myPrayerRole(vid, p){ const v=S.volunteers[vid]; if(!v) return null; const pl=prayerPlan(p)[v.zone]; if(!pl) return null;
+  let i=pl.first.findIndex(x=>x.id===vid); if(i>=0) return {g:1, mate:pl.second.length?pl.second[i%pl.second.length]:null};
+  i=pl.second.findIndex(x=>x.id===vid); if(i>=0) return {g:2, mate:pl.first.length?pl.first[i%pl.first.length]:null};
+  return null; }
+const prayState = (v,p) => (v?.prayer && v.prayer.p===p.k && v.prayer.day===dayKey()) ? v.prayer : null;
+function canPray(vid, p){ const r=myPrayerRole(vid,p); if(!r) return {ok:false}; if(r.g===1) return {ok:now()>=p.T-2*60000, r};
+  const mate=r.mate&&S.volunteers[r.mate.id]; const ms=prayState(mate,p); return {ok: !mate || (ms&&ms.back) || now()>=p.T+p.dur, r, wait:mate}; }
+function prayerPortal(vid){
+  const p=prayerNow(); if(!p) return ''; const v=S.volunteers[vid]; if(!v || zAttendOnly(v.zone) || !(v.status==='active'||v.status==='break')) return '';
+  const r=myPrayerRole(vid,p); if(!r) return ''; const s=prayState(v,p); const c=canPray(vid,p);
+  const mateName=r.mate?firstName(S.volunteers[r.mate.id]?.name||r.mate.name):'';
+  let body='';
+  if(s && !s.back){ const left=s.out+p.dur-now(); body=`<div class="pray-t ${left<0?'late':''}">${left>=0?`ترجع خلال <b class="num" data-countdown="${s.out+p.dur}">${fmtClock(left)}</b>`:`⚠️ تأخرت <b class="num">${fmtDur(-left)}</b>، ارجع لزونك`}</div><button class="btn ok lg" data-act="pray-back">✅ رجعت</button>`; }
+  else if(s && s.back){ body=`<div class="small" style="color:var(--ok)">✅ رجعت ${fmtTime(s.back)}، تقبّل الله${s.back-s.out<=p.dur?' · +5 نقاط انضباط':''}</div>`; }
+  else if(c.ok){ body=`<button class="btn primary lg" data-act="pray-go">🕌 طلعت للصلاة</button>${mateName?`<p class="tiny" style="margin:0;opacity:.85">${r.g===1?`${esc(mateName)} يغطي مكانك`:`رجع ${esc(mateName)}، دورك الحين`}</p>`:''}`; }
+  else { body=`<div class="small">${r.g===1?`دورك يبدأ مع الأذان ${fmtTime(p.T)}`:`أنت تغطي مكان <b>${esc(mateName)}</b>، وتطلع أنت بعد ما يرجع`}</div>`; }
+  return `<section class="pray-card"><div class="row" style="justify-content:space-between"><b>🕌 صلاة ${p.t} · ${fmtTime(p.T)}</b><span class="pill nodot">${r.g===1?'الفوج الأول':'الفوج الثاني'}</span></div>${body}<p class="tiny" style="margin:0;opacity:.75">المدة ${prayCfg().dur} دقيقة · ما تنخصم من رصيد الاستراحة</p></section>`;
+}
+function prayerCard(){
+  const p=prayerNow(); if(!p) return ''; const plan=prayerPlan(p); const zs=zones().filter(z=>plan[z.id]);
+  const rows=zs.map(z=>{ const pl=plan[z.id]; const all=[...pl.first,...pl.second]; const out=all.filter(v=>{ const s=prayState(S.volunteers[v.id],p); return s&&!s.back; }); const late=out.filter(v=>{ const s=prayState(S.volunteers[v.id],p); return now()>s.out+p.dur; }); const back=all.filter(v=>prayState(S.volunteers[v.id],p)?.back).length;
+    return `<div class="li"><span class="zdot" style="--zc:${esc(z.color)}"></span><div class="grow"><div class="t">${esc(z.name)} <span class="muted small num">برا ${out.length} · رجع ${back} من ${all.length}</span></div><div class="s">${out.map(v=>`<span style="${late.includes(v)?'color:var(--crit);font-weight:700':''}">${esc(firstName(v.name))}${late.includes(v)?` ⚠️ ${fmtDur(now()-prayState(S.volunteers[v.id],p).out-p.dur)}`:''}</span>`).join('، ')||'الكل في مكانه'}</div></div></div>`; }).join('');
+  return rows?`<section class="card"><div class="card-h"><h2>🕌 صلاة ${p.t} · ${fmtTime(p.T)}</h2><span class="tiny muted">تناوب تلقائي · ${p.dur/60000} دقيقة</span></div><div class="list">${rows}</div></section>`:'';
+}
+/* ---------- وينك؟ + تفقّد القائد + المخالفات ---------- */
+const PING_WAIT = 3*60000;
+const ROLL_EVERY = () => (cfg().rollEvery||60)*60000;
+function pingState(v){ const p=v?.ping; if(!p || !p.at) return null; if(now()-p.at>2*3600000) return null; return {...p, late:!p.reply && now()-p.at>PING_WAIT}; }
+const PING_R = {here:'في زوني ✅', brk:'في استراحة ☕', pray:'في الصلاة 🕌', back:'راجع الحين 🏃'};
+function pingCard(){
+  const list=vols().map(v=>({v, p:pingState(v)})).filter(x=>x.p && (!x.p.reply || now()-x.p.replyAt<10*60000)).sort((a,b)=>b.p.at-a.p.at);
+  if(isFull()) list.filter(x=>x.p.late && !x.p.missed).forEach(x=>{ const cur=S.volunteers[x.v.id]; put('volunteers', x.v.id, {...cur, ping:{...cur.ping, missed:true}}); addLog(x.v.id,'ping_miss',{by:'admin'}); });
+  if(!list.length) return '';
+  return `<section class="card"><div class="card-h"><h2>📲 وينك؟</h2></div><div class="list">${list.map(({v,p})=>`<div class="li">${avatar(v.id)}<div class="grow"><div class="t">${esc(v.name)}</div><div class="s">${esc(zName(v.zone))} · ${p.reply?`<b style="color:var(--ok)">${PING_R[p.reply]||p.reply}</b> · بعد ${fmtDur(p.replyAt-p.at)}`:p.late?`<b style="color:var(--crit)">⚠️ ما رد من ${fmtDur(now()-p.at)}</b>`:`بانتظار الرد · ${fmtDur(now()-p.at)}`}</div></div>${!p.reply&&v.phone?`<a class="btn sm" href="tel:${esc(String(v.phone).replace(/[^\d+]/g,''))}">${ic('phone')} اتصال</a>`:''}</div>`).join('')}</div></section>`;
+}
+function pingBanner(v){ const p=pingState(v); if(!p || p.reply) return '';
+  if(FX.ping!==p.at){ FX.ping=p.at; setTimeout(()=>{ try{ navigator.vibrate&&navigator.vibrate([300,120,300,120,300]); }catch{} try{ say('المشرف يدورك، وينك؟'); }catch{} },200); }
+  return `<section class="ping-card" role="alertdialog"><b>📲 المشرف يدورك، وينك؟</b><div class="ping-btns">${Object.entries(PING_R).map(([k,t])=>`<button class="btn" data-act="ping-reply" data-r="${k}">${t}</button>`).join('')}</div></section>`; }
+/* تفقّد القائد */
+function lastRoll(zid){ return Object.values(S.logs).filter(l=>l.type==='roll' && l.zone===zid).sort((a,b)=>b.at-a.at)[0]; }
+function rollDue(vid){ const L=cfg().leaders||{}; if(L.day!==dayKey()) return null; const zid=Object.entries(L.byZone||{}).find(([,id])=>id===vid)?.[0]; if(!zid || zAttendOnly(zid)) return null; const lr=lastRoll(zid); const since=lr?lr.at:Math.max(dayStart(), ...Object.values(S.logs).filter(l=>l.type==='in'&&l.v===vid&&l.at>=dayStart()).map(l=>l.at)); return now()-since>=ROLL_EVERY()?zid:null; }
+function rollPortal(vid){ const zid=rollDue(vid); if(!zid) return ''; const team=allVols().filter(v=>v.zone===zid && v.id!==vid && (v.status==='active'||v.status==='break')).sort((a,b)=>a.name.localeCompare(b.name,'ar'));
+  if(!team.length) return '';
+  return `<section class="card roll-card"><div class="card-h"><h3>👑 تفقّد فريقك</h3><span class="tiny muted">علّم على اللي قدامك الحين</span></div><form class="card-b stack" style="gap:8px" data-form="roll" data-z="${esc(zid)}">${team.map(v=>`<label class="row small roll-item"><input type="checkbox" name="p" value="${v.id}" ${v.status==='break'||onMini(v)?'checked disabled':''}> ${esc(v.name)} ${v.status==='break'?'<span class="tiny muted">(استراحة)</span>':''}</label>`).join('')}<button class="btn primary">إرسال التفقّد</button></form></section>`; }
+function rollCard(){
+  const rows=zones().map(z=>({z, r:lastRoll(z.id)})).filter(x=>x.r && x.r.at>=dayStart() && (x.r.absent||[]).length && now()-x.r.at<ROLL_EVERY());
+  if(!rows.length) return '';
+  return `<section class="card" style="border-color:var(--warn)"><div class="card-h"><h2>👑 تفقّد القادة: غياب</h2></div><div class="list">${rows.map(({z,r})=>`<div class="li"><span class="zdot" style="--zc:${esc(z.color)}"></span><div class="grow"><div class="t">${esc(z.name)} <span class="tiny muted">${fmtTime(r.at)} · من ${esc(S.volunteers[r.v]?.name||'القائد')}</span></div><div class="s">${(r.absent||[]).map(id=>`<b style="color:var(--crit)">${esc(S.volunteers[id]?.name||'')}</b>`).join('، ')}</div></div>${(r.absent||[]).length===1?`<button class="btn sm" data-act="ping" data-id="${r.absent[0]}">📲 وينك؟</button>`:''}</div>`).join('')}</div></section>`;
+}
+/* المخالفات */
+const VIOL_T = {brk:'تأخر من الاستراحة', pray:'تأخر من الصلاة', ping:'ما رد على "وينك؟"', roll:'غياب في التفقّد', warn:'تنبيه من المشرف', lateIn:'تأخر في الحضور'};
+function violations(vid){
+  const v=S.volunteers[vid]; const L=idx().byV[vid]||[]; const g=gami(vid); const c={};
+  c.brk=g.late||0;
+  c.pray=L.filter(l=>l.type==='prayer_in' && l.late).length;
+  c.ping=L.filter(l=>l.type==='ping_miss').length;
+  c.roll=Object.values(S.logs).filter(l=>l.type==='roll' && (l.absent||[]).includes(vid)).length;
+  c.warn=(idx().notesByV[vid]||[]).filter(n=>n.kind==='warn').length;
+  c.lateIn=0; if(v?.shiftStart){ const days=new Set(); L.filter(l=>l.type==='in').forEach(l=>{ const d=dayStart(l.at); if(days.has(d)) return; days.add(d); const [h,m]=String(v.shiftStart).split(':').map(Number); const t=new Date(d); t.setHours(h||0,m||0,0,0); if(l.at>t.getTime()+10*60000) c.lateIn++; }); }
+  const total=Object.values(c).reduce((a,b)=>a+b,0); return {c,total};
+}
+const violAt = () => cfg().violAt||3;
+function violCard(){
+  const list=vols().filter(v=>!zAttendOnly(v.zone)).map(v=>({v, x:violations(v.id)})).filter(r=>r.x.total>=2).sort((a,b)=>b.x.total-a.x.total);
+  if(!list.length) return '';
+  return `<section class="card" style="border-color:var(--crit)"><div class="card-h"><h2>⚠️ تكررت مخالفاتهم</h2><span class="tiny muted">التنبيه من ${violAt()} مخالفات</span></div><div class="list">${list.slice(0,15).map(({v,x})=>`<div class="li click" data-act="open-vol" data-id="${v.id}">${avatar(v.id)}<div class="grow"><div class="t">${esc(v.name)} <span class="pill ${x.total>=violAt()?'crit':'warn'} nodot num">${x.total}</span></div><div class="s">${Object.entries(x.c).filter(([,n])=>n).map(([k,n])=>`${VIOL_T[k]} ×${n}`).join(' · ')}</div></div>${x.total>=violAt()&&v.phone?`<a class="btn sm" href="${esc(waSmart(v.phone, `أهلاً ${v.name}، نلاحظ تكرار بعض المخالفات (${Object.entries(x.c).filter(([,n])=>n).map(([k,n])=>VIOL_T[k]+' ×'+n).join('، ')}). نرجو الالتزام، ونعتمد عليك 🤍\n${cfg().eventName||''}`))}" target="_blank" rel="noopener" onclick="event.stopPropagation()">تنبيه واتساب</a>`:''}</div>`).join('')}</div></section>`;
+}
+function violBlock(vid){ const x=violations(vid); if(!x.total) return ''; return `<div class="viol ${x.total>=violAt()?'hi':''}"><b>⚠️ المخالفات: ${x.total}</b><div class="small">${Object.entries(x.c).filter(([,n])=>n).map(([k,n])=>`${VIOL_T[k]} ×${n}`).join(' · ')}</div></div>`; }
+/* ---------- لوحة البلاغات ---------- */
+function alertsBoard(){
+  const MZ=myZoneSet(); const f=UI.alF||'open'; const tf=UI.alT||'all';
+  const all=Object.entries(S.alerts).map(([id,a])=>({...a,id})).filter(a=>!MZ || MZ.has(a.zone)).sort((a,b)=>b.at-a.at);
+  const st=a=>a.resolved?'done':a.working?'work':'open';
+  const cnt={open:all.filter(a=>st(a)==='open').length, work:all.filter(a=>st(a)==='work').length, done:all.filter(a=>st(a)==='done').length};
+  let list=all.filter(a=>f==='all'||st(a)===f); if(tf!=='all') list=list.filter(a=>a.type===tf);
+  const who=a=>a.by&&S.volunteers[a.by]?S.volunteers[a.by].name:(a.byName||'المشرف');
+  return `<div class="section-title"><h2>🚨 لوحة البلاغات</h2><span class="tiny muted">كل البلاغات محفوظة، حتى بعد حلها</span></div>
+  <div class="kpis">${kpi(cnt.open,'جديدة','var(--crit)')}${kpi(cnt.work,'قيد المتابعة','var(--warn)')}${kpi(cnt.done,'تم حلها','var(--ok)')}</div>
+  <div class="card card-b stack" style="gap:10px">
+    <div class="seg" role="group">${[['open','جديدة'],['work','قيد المتابعة'],['done','تم حلها'],['all','الكل']].map(([k,t])=>`<button aria-pressed="${f===k}" data-act="al-f" data-f="${k}">${t}</button>`).join('')}</div>
+    <div class="seg" role="group">${[['all','كل الأنواع'],...Object.entries(ALERT_T).map(([k,v])=>[k,v.t])].map(([k,t])=>`<button aria-pressed="${tf===k}" data-act="al-t" data-t="${k}">${t}</button>`).join('')}</div>
+  </div>
+  <section class="card">${list.length?`<div class="list">${list.map(a=>{ const T=ALERT_T[a.type]||ALERT_T.help; const s=st(a); return `<div class="li al-${s}" style="flex-wrap:wrap">
+    <span class="pill ${T.c}">${T.t}</span>
+    <div class="grow"><div class="t">${esc(a.text||T.t)}</div>
+      <div class="s">${a.zone?esc(zName(a.zone))+' · ':''}من ${esc(who(a))} · <span class="num">${fmtTime(a.at)}</span> (${ago(a.at)})${a.working?` · تابعته ${esc(a.workBy||'')} ${fmtTime(a.working)}`:''}${a.resolved?` · ✅ انحل ${a.resolvedAt?fmtTime(a.resolvedAt):''}${a.resolvedBy?' بواسطة '+esc(a.resolvedBy):''}${a.resolvedAt?` · خلال ${fmtDur(a.resolvedAt-a.at)}`:''}`:''}${a.note?`<br>📝 ${esc(a.note)}`:''}</div></div>
+    <div class="row">${s==='open'?`<button class="btn sm warn" data-act="al-work" data-id="${a.id}">أتابعه</button>`:''}${s!=='done'?`<button class="btn sm ok" data-act="al-done" data-id="${a.id}">${ic('check')} تم الحل</button>`:`<button class="btn sm ghost" data-act="al-reopen" data-id="${a.id}">إعادة فتح</button>`}</div></div>`; }).join('')}</div>`:'<div class="empty">ما فيه بلاغات هنا 👌</div>'}</section>`;
+}
 /* ---------- الاستراحة القصيرة الدورية ---------- */
 const miniCfg = () => ({enabled:true, every:60, per:1, min:7, ...(cfg().mini||{})});
 const onMini = v => !!(v && v.mini && v.status==='active' && now() < v.mini.until);
 const restAt = v => Math.max(v.activeSince||0, v.mini?.until||0);
-function miniBase(){ const ds=dayStart(); const first=Object.values(S.logs).filter(l=>l.type==='in' && l.at>=ds).reduce((m,l)=>Math.min(m,l.at), Infinity); return Math.max(cfg().miniRound||0, first===Infinity?now():first); }
+function miniBase(){ const ds=dayStart(); const first=Object.values(S.logs).filter(l=>l.type==='in' && l.at>=ds).reduce((m,l)=>Math.min(m,l.at), Infinity); const zr=Math.min(...zones().map(z=>(cfg().miniRounds||{})[z.id]||cfg().miniRound||0)); return Math.max(isFinite(zr)?zr:(cfg().miniRound||0), first===Infinity?now():first); }
 function miniPicks(){
   const m=miniCfg(); const skip=UI.miniSkip||[];
-  return zoneStats().filter(s=>!skip.includes(s.z.id) && (s.z.crowd??1)<3 && !peakSoon(s.z.id)).map(s=>{
+  return zoneStats().filter(s=>!skip.includes(s.z.id) && !attendOnly(s.z) && (s.z.crowd??1)<3 && !peakSoon(s.z.id)).map(s=>{
     const pool=s.active.filter(v=>!onMini(v) && v.role!=='قائد فريق').sort((a,b)=>restAt(a)-restAt(b));
     const n=Math.min(m.per, Math.max(0, s.active.length-1));
     return {z:s.z, vs:pool.slice(0,n)};
@@ -2067,7 +2286,7 @@ function scheduleRender(){ if(rq) return; rq=true; requestAnimationFrame(()=>{ r
 function render(){
   applyBrand(); updateBalance(); if(S.config?.eventName) document.title=S.config.eventName;
   const app=$('#app');
-  const oldTicker=app.querySelector('.ticker');
+  const oldTicker=app.querySelector('.ticker'); const oldTeam=app.querySelector('.nb-team');
   const a=document.activeElement; const keep = a && a.id && app.contains(a) ? {id:a.id, val:a.value, s:a.selectionStart, e:a.selectionEnd} : null;
   const html=view(); const sticky=app.querySelector('[data-sticky]');
   if(sticky && html.includes(`data-sticky="${sticky.dataset.sticky}"`)){ if(UI.drawer) renderDrawer(); return; }
@@ -2075,6 +2294,7 @@ function render(){
   if(keep){ const el=document.getElementById(keep.id); if(el){ if('value' in el && keep.val!=null && el.tagName!=='SELECT' && el.type!=='checkbox') el.value=keep.val; el.focus(); try{ el.setSelectionRange(keep.s,keep.e); }catch{} } }
   if(UI.drawer) renderDrawer();
   if(oldTicker){ const nt=app.querySelector('.ticker'); if(nt && nt.dataset.sig===oldTicker.dataset.sig) nt.replaceWith(oldTicker); }
+  if(oldTeam){ const nt=app.querySelector('.nb-team'); if(nt && nt.dataset.sig===oldTeam.dataset.sig) nt.replaceWith(oldTeam); }
   const lu=app.querySelector('.lvlup'); if(lu){ const k=getSes()?.id+':'+(lu.querySelector('h2')?.textContent||''); if(FX.lvl!==k){ FX.lvl=k; confetti(220); } }
   if(UI.kiosk.step==='done' && UI.kiosk.lu && !UI.kiosk.fx){ UI.kiosk.fx=true; confetti(220); }
   if(S.ready && S.config) ensureLeaders();
@@ -2232,21 +2452,23 @@ const findByCode = code => vols().find(v=>String(v.code)===String(code).trim());
 
 /* ---------- واجهة المشرف ---------- */
 const TABS = [
-  ['dash','اللوحة','dash'],['zones','الزونات','zones'],['people','المتطوعون','people'],
-  ['activity','السجل والتعاميم','activity'],['honors','التحفيز والتكريم','trophy'],['reports','التقارير','reports'],['event-setup','الإعدادات','settings'],
+  ['dash','اللوحة','dash'],['alerts','البلاغات','bell'],['zones','الزونات','zones'],['people','المتطوعون','people'],
+  ['activity','السجل والتعاميم','activity'],['honors','التحفيز والتكريم','trophy'],['hosp','الضيافة','gift'],['reports','التقارير','reports'],['event-setup','الإعدادات','settings'],
 ];
-const TAB_SHORT = {dash:'اللوحة',zones:'الزونات',people:'المتطوعون',activity:'السجل',honors:'التكريم',reports:'التقارير','event-setup':'الإعدادات'};
-function curTab(){ const h=location.hash.slice(1); return TABS.some(t=>t[0]===h) ? h : 'dash'; }
+const TAB_SHORT = {dash:'اللوحة',alerts:'البلاغات',zones:'الزونات',people:'المتطوعون',activity:'السجل',honors:'التكريم',hosp:'الضيافة',reports:'التقارير','event-setup':'الإعدادات'};
+const ROLE_TABS = {attend:['dash','alerts','people'], hosp:['hosp'], zones:['dash','alerts','zones','people','honors']};
+function roleTabs(){ const r=ROLE(); const allow=ROLE_TABS[r]; return allow? TABS.filter(t=>allow.includes(t[0])) : TABS; }
+function curTab(){ const h=location.hash.slice(1); const T=roleTabs(); return T.some(t=>t[0]===h) ? h : T[0][0]; }
 function adminView(){
   if(location.hash==='#ops-wall') return wallView();
   const tab=curTab(); const c=cfg();
-  const openAlerts = Object.values(S.alerts).filter(a=>!a.resolved).length;
-  const body = {dash:dashView, zones:boardView, people:peopleView, activity:activityView, honors:honorsView, reports:reportsView, 'event-setup':settingsView}[tab]();
+  const openAlerts = Object.values(S.alerts).filter(a=>!a.resolved && !opsAlert(a) && (!myZoneSet() || myZoneSet().has(a.zone))).length;
+  const R=ROLE(); const body = {dash:R==='attend'?attendDash:dashView, hosp:hospView, alerts:alertsBoard, zones:boardView, people:peopleView, activity:activityView, honors:honorsView, reports:reportsView, 'event-setup':settingsView}[tab]();
   const badge = n => n ? `<span class="badge num">${n}</span>` : '';
   return `<div class="shell">
     <aside class="side">
-      <div class="brand">${brandMark()}<div><b>${esc(cfg().eventName||'إدارة المتطوعين')}</b><span class="tiny muted">لوحة المشرف</span></div></div>
-      ${TABS.map(([id,t,i])=>`<button class="nav-item" data-act="tab" data-tab="${id}" ${tab===id?'aria-current="page"':''}>${ic(i)} ${t} ${id==='dash'?badge(openAlerts):''}</button>`).join('')}
+      <div class="brand">${brandMark()}<div><b>${esc(cfg().eventName||'إدارة المتطوعين')}</b><span class="tiny muted">${ROLE_T[R]||'لوحة المشرف'}${myStaff()?.name?' · '+esc(myStaff().name):''}</span></div></div>
+      ${roleTabs().map(([id,t,i])=>`<button class="nav-item" data-act="tab" data-tab="${id}" ${tab===id?'aria-current="page"':''}>${ic(i)} ${t} ${id==='alerts'?badge(openAlerts):''}</button>`).join('')}
       <div class="side-foot">
         <button class="btn block" data-act="to-kiosk">${ic('kiosk')} فتح نقطة التسجيل</button>
         <button class="btn ghost block" data-act="logout">${ic('logout')} خروج</button>
@@ -2257,12 +2479,13 @@ function adminView(){
         <div><h1>${esc(c.eventName)}</h1><div class="sub">${S.mode==='db'?'<span class="live">مباشر</span>':'<span>وضع تجريبي</span>'}<span>${c.eventDate?esc(fmtDay(new Date(c.eventDate).getTime())):''}</span><span class="num">${fmtTime(now())}</span></div></div>
         <div class="row">
           ${SAMPLE?`<button class="btn sm primary" data-act="ai-open">${ic('spark')} المساعد الذكي</button>`:''}
-          <button class="btn sm" data-act="tab" data-tab="ops-wall">${ic('tv')} شاشة العمليات</button>
-          ${goldNow()?`<button class="btn sm" style="background:#facc15;border-color:#d97706;color:#1c0f02" data-act="gold-stop">${ic('bolt')} إيقاف الذهبية</button>`:`<button class="btn sm" style="color:#b45309;border-color:#d97706" data-act="gold-open">${ic('bolt')} الساعة الذهبية</button>`}
-          <button class="btn sm" data-act="mission-new">${ic('flag')} مهمة فورية</button>
-          <button class="btn sm" data-act="announce">${ic('megaphone')} تعميم</button>
-          <button class="btn sm" data-act="add-vol">${ic('plus')} متطوع</button>
-          ${emActive()?'':`<button class="btn sm" style="color:var(--crit);border-color:var(--crit)" data-act="em-open">${ic('siren')} طوارئ</button>`}
+          ${R==='full'||R==='zones'?`<button class="btn sm" data-act="tab" data-tab="ops-wall">${ic('tv')} شاشة العمليات</button>`:''}
+          ${R!=='full'&&R!=='zones'?'':goldNow()?`<button class="btn sm" style="background:#facc15;border-color:#d97706;color:#1c0f02" data-act="gold-stop">${ic('bolt')} إيقاف الذهبية</button>`:`<button class="btn sm" style="color:#b45309;border-color:#d97706" data-act="gold-open">${ic('bolt')} الساعة الذهبية</button>`}
+          ${R==='full'||R==='zones'?`<button class="btn sm" data-act="mission-new">${ic('flag')} مهمة فورية</button>
+          <button class="btn sm" data-act="announce">${ic('megaphone')} تعميم</button>`:''}
+          ${R==='full'?`<button class="btn sm" data-act="add-vol">${ic('plus')} متطوع</button>`:''}
+          ${R==='hosp'?`<button class="btn sm" style="color:var(--crit);border-color:var(--crit)" data-act="dalal-new">🔔 تنبيه دلال</button>`:''}
+          ${emActive()||R==='hosp'?'':`<button class="btn sm" style="color:var(--crit);border-color:var(--crit)" data-act="em-open">${ic('siren')} طوارئ</button>`}
           <button class="btn sm m-only" data-act="to-kiosk" aria-label="نقطة التسجيل">${ic('kiosk')}</button>
           <button class="btn sm ghost m-only" data-act="logout" aria-label="خروج">${ic('logout')}</button>
         </div>
@@ -2274,7 +2497,7 @@ function adminView(){
       <main class="view" id="view">${body}</main>
     </div>
     <nav class="bottom" aria-label="التنقل">
-      ${TABS.map(([id,t,i])=>`<button data-act="tab" data-tab="${id}" ${tab===id?'aria-current="page"':''}>${ic(i)}<span>${TAB_SHORT[id]}</span>${id==='dash'&&openAlerts?`<span class="badge num">${openAlerts}</span>`:''}</button>`).join('')}
+      ${roleTabs().map(([id,t,i])=>`<button data-act="tab" data-tab="${id}" ${tab===id?'aria-current="page"':''}>${ic(i)}<span>${TAB_SHORT[id]}</span>${id==='alerts'&&openAlerts?`<span class="badge num">${openAlerts}</span>`:''}</button>`).join('')}
     </nav>
   </div>${UI.sel.size && tab==='zones' ? actionBar() : ''}`;
 }
@@ -2284,7 +2507,7 @@ function dashView(){
   const all=vols(); const cnt=s=>all.filter(v=>v.status===s).length;
   const totalMs = all.reduce((s,v)=>s+workedMs(v.id),0);
   const st=zoneStats(); const sug=suggestions();
-  const alerts=Object.entries(S.alerts).filter(([,a])=>!a.resolved).sort((a,b)=>b[1].at-a[1].at);
+  const MZ=myZoneSet(); const alerts=Object.entries(S.alerts).filter(([,a])=>!a.resolved && !opsAlert(a) && (!MZ || MZ.has(a.zone))).sort((a,b)=>b[1].at-a[1].at);
   const overdue=all.filter(isOverdue), tired=all.filter(isFatigued);
   const loose = all.filter(v=>(v.status==='active'||v.status==='break') && !zoneById(v.zone));
   return `
@@ -2308,10 +2531,15 @@ function dashView(){
   </div></section>`:''}
   ${tickerHtml()}
   ${lostCard()}
-  ${leadersCard()}
+  ${dalalCard()}
+  ${pingCard()}
+  ${rollCard()}
+  ${violCard()}
+  ${prayerCard()}
+  ${isFull()?leadersCard():''}
   ${miniCard()}
-  ${selfieCard()}
-  ${payCard()}
+  ${isFull()?selfieCard():''}
+  ${isFull()?payCard():''}
   ${mealCard()}
   ${shiftsCard()}
   ${peaksCard()}
@@ -2394,7 +2622,7 @@ function peopleView(){
   list.sort((a,b)=>a.name.localeCompare(b.name,'ar'));
   const counts={all:vols().length}; Object.keys(STATUS).forEach(s=>counts[s]=vols().filter(v=>v.status===s).length);
   return `<div class="section-title"><h2>المتطوعون <span class="muted num small">(${list.length})</span></h2>
-    <div class="row"><button class="btn sm" data-act="fix-phones">📞 إصلاح الجوالات والرموز</button><button class="btn sm" data-act="reset-missing">🔑 رموز للي ما وصلتهم رسالة</button><button class="btn sm" data-act="creds-file">📲 إرسال بيانات الدخول</button><button class="btn sm" data-act="print-open">${ic('idcard')} طباعة البطاقات</button><button class="btn sm" data-act="import">استيراد قائمة</button><button class="btn sm primary" data-act="add-vol">${ic('plus')} إضافة متطوع</button></div></div>
+    <div class="row">${isFull()?`<button class="btn sm" data-act="fix-phones">📞 إصلاح الجوالات والرموز</button><button class="btn sm" data-act="reset-missing">🔑 رموز للي ما وصلتهم رسالة</button><button class="btn sm" data-act="creds-file">📲 إرسال بيانات الدخول</button><button class="btn sm" data-act="print-open">${ic('idcard')} طباعة البطاقات</button><button class="btn sm" data-act="import">استيراد قائمة</button><button class="btn sm primary" data-act="add-vol">${ic('plus')} إضافة متطوع</button>`:''}</div></div>
   <div class="card card-b stack" style="gap:10px">
     <input class="input" id="people-q" data-input="q" placeholder="ابحث بالاسم أو الرقم أو الجوال أو الدور" value="${esc(UI.q)}">
     <div class="row">
@@ -2443,9 +2671,10 @@ function renderDrawer(full){
       <div><b>${rating(vid)?rating(vid).toFixed(1):'—'}</b><span>التقييم</span></div>
     </div>
     ${(()=>{ const sf=S.selfies?.[vid+'_'+dayKey()]; return sf?`<div class="sf-drawer"><span class="tiny muted">سيلفي حضور اليوم ${fmtTime(sf.at)}</span>${sf.img?`<img src="${esc(sf.img)}" alt="سيلفي الحضور">`:'<b style="color:var(--warn)">⚠️ سجّل بدون سيلفي</b>'}</div>`:''; })()}
-    ${healthBlock(vid)}
+    ${violBlock(vid)}
+    ${ROLE()==='full'||ROLE()==='zones'?healthBlock(vid):''}
     ${(()=>{ const g=gami(vid); return `<div class="card card-b stack" style="gap:10px">
-      <div class="row" style="justify-content:space-between"><div class="row"><b class="num" style="font-family:var(--font-display);font-size:1.5rem">${g.p}</b><span class="muted small">نقطة</span>${levelPill(g.level)}${flameHtml(g.streak)}</div><button class="btn sm primary" data-act="award" data-id="${vid}">${ic('gift')} منح مكافأة</button></div>
+      <div class="row" style="justify-content:space-between"><div class="row"><b class="num" style="font-family:var(--font-display);font-size:1.5rem">${g.p}</b><span class="muted small">نقطة</span>${levelPill(g.level)}${flameHtml(g.streak)}</div>${isFull()||ROLE()==='zones'?`<button class="btn sm primary" data-act="award" data-id="${vid}">${ic('gift')} منح مكافأة</button>`:''}</div>
       ${g.next?`<div class="bar"><i style="width:${Math.round(g.prog*100)}%;background:${g.next.c}"></i></div><div class="tiny muted">باقي ${g.next.min-g.p} نقطة للمستوى ${g.next.t}</div>`:''}
       ${g.badges.length?`<div class="stks">${stickersOf(g,false)}</div>`:'<div class="tiny muted">ما جمع ملصقات بعد.</div>'}
     </div>`; })()}
@@ -2453,9 +2682,10 @@ function renderDrawer(full){
       ${mealOn()?(()=>{ const ms=mealState(vid); return ms.st==='used'?`<span class="pill ok nodot">استلم وجبة اليوم ${ms.at?fmtTime(ms.at):''}</span>`:`<button class="btn sm" data-act="meal-manual" data-id="${vid}">${ic('gift')} صرف وجبة يدوياً</button>`; })():''}
       <button class="btn sm" data-act="cert" data-id="${vid}">${ic('cert')} الشهادة</button>
       <button class="btn sm" data-act="id-card" data-id="${vid}">${ic('idcard')} البطاقة</button>
-      <button class="btn sm" data-act="edit-vol" data-id="${vid}">تعديل البيانات</button>
-      <button class="btn sm" data-act="reset-pin" data-id="${vid}">إعادة تعيين الرمز</button>
-      <button class="btn sm ghost" style="color:var(--crit)" data-act="del-vol" data-id="${vid}">حذف</button>
+      <button class="btn sm" data-act="ping" data-id="${vid}">📲 وينك؟</button>
+      ${isFull()?`<button class="btn sm" data-act="edit-vol" data-id="${vid}">تعديل البيانات</button>`:''}
+      ${isFull()||ROLE()==='attend'?`<button class="btn sm" data-act="reset-pin" data-id="${vid}">إعادة تعيين الرمز</button>`:''}
+      ${isFull()?`<button class="btn sm ghost" style="color:var(--crit)" data-act="del-vol" data-id="${vid}">حذف</button>`:''}
     </div>
     <div class="hr"></div>
     <h3>الملاحظات والتقييم</h3>
@@ -2652,7 +2882,24 @@ function settingsView(){
       <div class="field"><label for="zn-${esc(z.id)}">اسم الزون</label><input class="input" id="zn-${esc(z.id)}" data-zone="${esc(z.id)}" data-k="name" value="${esc(z.name)}"></div>
       <div class="field"><label for="zt-${esc(z.id)}">المستهدف</label><input class="input num" id="zt-${esc(z.id)}" type="number" min="0" data-zone="${esc(z.id)}" data-k="target" value="${z.target}"></div>
       <div class="row"><div class="swatches">${ZCOLORS.map(col=>`<button class="sw" style="background:${col}" aria-label="لون" aria-pressed="${z.color===col}" data-act="zone-color" data-z="${esc(z.id)}" data-c="${col}"></button>`).join('')}</div><button class="btn sm ghost" style="color:var(--crit)" data-act="del-zone" data-z="${esc(z.id)}">حذف</button></div>
+      <div class="row small" style="gap:6px">التبديل: <div class="seg" role="group">${[['a','مجموعة 1 (استقبال/تذاكر)'],['b','مجموعة 2'],['lock','🔒 ثابت · حضور فقط']].map(([g,t])=>`<button aria-pressed="${zoneGrp(z)===g}" data-act="zone-grp" data-z="${esc(z.id)}" data-g="${g}">${t}</button>`).join('')}</div></div>
     </div>`).join('')}
+  </div></section>
+  <section class="card"><div class="card-h"><h2>👩‍💼 المشرفات</h2></div><div class="card-b stack" style="gap:10px">
+    <p class="small muted" style="margin:0">كل مشرفة تدخل بإيميلها من "دخول المشرف"، وتشوف شغلها بس.</p>
+    ${Object.entries({...STAFF_DEFAULT, ...(cfg().staff||{})}).map(([e,st])=>{ const zs=st.role==='zones'?(st.zones?.length?st.zones:allZones().filter(z=>(st.zoneNames||[]).some(n=>String(z.name||'').includes(n))).map(z=>z.id)):[]; return `<div class="staff-row"><div><b>${esc(st.name||'')}</b> <span class="pill nodot tiny">${ROLE_T[st.role]||''}</span><div class="tiny muted" dir="ltr">${esc(e)}</div></div>${st.role==='zones'?`<div class="chk-grid">${allZones().map(z=>`<label class="row small"><input type="checkbox" data-staff-zone="${esc(e)}" value="${esc(z.id)}" ${zs.includes(z.id)?'checked':''}> ${esc(z.name)}</label>`).join('')}</div>`:''}</div>`; }).join('')}
+  </div></section>
+  <section class="card"><div class="card-h"><h2>⚠️ المتابعة والمخالفات</h2></div><div class="card-b grid2">
+    <div class="field"><label>تفقّد القائد لفريقه كل (دقيقة)</label><input class="input num" type="number" min="15" max="240" data-cfg="rollEvery" data-num value="${cfg().rollEvery||60}"></div>
+    <div class="field"><label>التنبيه الأحمر بعد كم مخالفة</label><input class="input num" type="number" min="1" max="20" data-cfg="violAt" data-num value="${violAt()}"></div>
+  </div></section>
+  <section class="card"><div class="card-h"><h2>🕌 الصلاة بالتناوب</h2><label class="row small"><input type="checkbox" data-act="pray-toggle" ${prayCfg().enabled?'checked':''}> مفعّلة</label></div><div class="card-b stack" style="gap:10px">
+    <p class="small muted" style="margin:0">كل زون ينقسم فوجين تلقائياً، والفوج الأول في المغرب يصير الثاني في العشاء. قائد اليوم يصلي آخر فوج. اليوم: المغرب <b class="num">${fmtTime(prayerTime('maghrib'))}</b> · العشاء <b class="num">${fmtTime(prayerTime('isha'))}</b></p>
+    <div class="grid2">
+      <div class="field"><label>مدة الصلاة لكل فوج (دقيقة)</label><input class="input num" type="number" min="5" max="60" data-pray="dur" value="${prayCfg().dur}"></div>
+      <div class="field"><label>وقت المغرب (اتركه فاضي للحساب التلقائي)</label><input class="input num" type="time" data-pray="maghrib" value="${esc((prayCfg().times||{}).maghrib||'')}"></div>
+      <div class="field"><label>وقت العشاء (اتركه فاضي للحساب التلقائي)</label><input class="input num" type="time" data-pray="isha" value="${esc((prayCfg().times||{}).isha||'')}"></div>
+    </div>
   </div></section>
   <section class="card"><div class="card-h"><h2>الأمان</h2></div><div class="card-b stack" style="gap:10px">
     ${FB_ON?`<p class="small" style="margin:0">تدخل كمشرف بـ <b>${esc(AUTH.user?.email||'')}</b>. لتغيير كلمة المرور أو إضافة مشرف جديد استخدم صفحة Authentication في Firebase، وأضف إيميل المشرف الجديد لقائمة المشرفين في ملف المنصة وقواعد الحماية.</p>`
@@ -2761,7 +3008,10 @@ function portalView(vid){
     ${lvlUpOverlay(vid)}
     ${goldBanner(v.zone)}
     ${leaderBanner(vid)}
+    ${pingBanner(v)}
     ${miniBanner(v)}
+    ${prayerPortal(vid)}
+    ${rollPortal(vid)}
     ${tickerHtml()}
     ${openLost().map(x=>`<div class="lost-banner"><b>${ic('eye')} ${LOST_T[x.kind]}</b><div>${esc(x.desc)}</div><div class="small" style="opacity:.85">آخر مشاهدة: ${esc(zName(x.zone))} · ${ago(x.at)}</div><button class="btn" data-act="lost-found" data-id="${x.id}">${ic('check')} لقيته</button></div>`).join('')}
     ${needsEnergy(v)?`<section class="card card-b stack" style="gap:10px"><h3>كيف طاقتك الآن؟</h3><div class="epick">${[3,2,1].map(l=>`<button class="btn" data-act="v-energy" data-l="${l}">${energyBar(l)}<span>${ENERGY[l].t}</span></button>`).join('')}</div></section>`:''}
@@ -2782,21 +3032,22 @@ function portalView(vid){
       <button class="btn" data-act="v-alert" data-t="help" style="color:var(--info)">${ic('help')} أحتاج دعم</button>
       <button class="btn" data-act="v-alert" data-t="medical" style="color:var(--crit)">${ic('med')} حالة طبية</button>
       <button class="btn" data-act="lost-new" style="color:#7c3aed">${ic('eye')} بلاغ مفقود</button>
+      <button class="btn" data-act="v-alert" data-t="supply" style="color:#b45309">🧃 ناقص شي بالغرفة</button>
     </div></section>`:''}
-    ${(()=>{ const g=gami(vid); return g.boxAvail?`<div class="box-card"><span class="mini-box">${ic('gift')}</span><div class="grow"><b style="font-size:1.05rem">عندك ${g.boxAvail} صندوق مفاجآت!</b><div class="small" style="opacity:.9">نقاط، قسائم، استراحة إضافية، أو ملصق نادر…</div></div><button class="btn" data-act="box-open" data-id="${vid}">افتحه</button></div>`:''; })()}
+    ${zAttendOnly(v.zone)?'':(()=>{ const g=gami(vid); return g.boxAvail?`<div class="box-card"><span class="mini-box">${ic('gift')}</span><div class="grow"><b style="font-size:1.05rem">عندك ${g.boxAvail} صندوق مفاجآت!</b><div class="small" style="opacity:.9">نقاط، قسائم، استراحة إضافية، أو ملصق نادر…</div></div><button class="btn" data-act="box-open" data-id="${vid}">افتحه</button></div>`:''; })()}
     ${(()=>{ const b=v.buddy&&S.volunteers[v.buddy]; if(!b) return ''; const pr=pairs(); const i=pr.findIndex(x=>x.a.id===vid||x.b.id===vid); return `<section class="card card-b stack" style="gap:8px"><div class="row" style="justify-content:space-between"><h3>${ic('link')} رفيقك</h3>${i>=0?`<span class="pill ${i===0?'ok':'accent'} nodot num">ترتيب ثنائيكم ${i+1} من ${pr.length}</span>`:''}</div>
       <div class="buddy"><span class="av" style="--zc:${zColor(b.zone)}">${esc(initials(b.name))}</span><div class="grow"><b>${esc(b.name)}</b><div class="small muted">${esc(zName(b.zone))} · <span class="pill ${STATUS[b.status].c}">${STATUS[b.status].t}</span></div></div><div style="text-align:center"><b class="num" style="font-family:var(--font-display);font-size:1.4rem">${i>=0?pr[i].p:0}</b><div class="tiny muted">نقاطكم معاً</div></div></div></section>`; })()}
     ${storyReady(v)?`<button class="story-cta" data-act="story" data-id="${vid}"><span>🎬</span><div class="grow"><b>قصة يومك جاهزة!</b><div class="small">شوف ملخص يومك وانشره ستوري</div></div><span aria-hidden="true" style="font-size:1.4rem">‹</span></button>`:''}
-    ${thanksPortal(vid)}
+    ${zAttendOnly(v.zone)?'':thanksPortal(vid)}
     ${RULES_MISS.size?`<p class="tiny muted" style="text-align:center;margin:0">رمز تقني للمشرف: ${[...RULES_MISS].join(' · ')}</p>`:''}
     ${payPortal(vid)}
     ${mealVoucher(vid)}
-    ${portalMissions(vid)}
+    ${zAttendOnly(v.zone)?'':portalMissions(vid)}
     ${z?`<section class="card"><div class="card-h"><h3>${ic('swap')} تسليم واستلام الزون</h3></div><div class="card-b stack" style="gap:8px">
       ${handoversOf(v.zone).slice(0,3).map(h=>`<div class="handover"><div>${esc(h.text)}</div><span class="tiny muted">${esc(authorName(h.by))} · ${ago(h.at)}</span></div>`).join('')||'<p class="small muted" style="margin:0">لا توجد ملاحظات تسليم.</p>'}
       <form class="stack" style="gap:8px" data-form="v-handover"><textarea class="input" id="vho-text" name="text" required placeholder="اكتب ملاحظة للي يستلم بعدك…" style="min-height:60px"></textarea><div class="row">${micBtn('#vho-text')}<button class="btn sm primary">حفظ</button></div></form>
     </div></section>`:''}
-    ${portalGami(vid)}
+    ${zAttendOnly(v.zone)?'':portalGami(vid)}
     <section class="card"><div class="card-h"><h3>${ic('megaphone')} التعاميم</h3></div>${msgs.length?`<div class="list">${msgs.map(m=>`<div class="li"><div class="grow"><div class="small">${esc(m.text)}</div><div class="s">${m.target==='all'?'للجميع':'لفريقك'} · ${ago(m.at)}</div></div></div>`).join('')}</div>`:'<div class="empty small">لا توجد تعاميم.</div>'}</section>
     ${mates.length?`<section class="card"><div class="card-h"><h3>فريقك الآن</h3><span class="tiny muted num">${mates.length}</span></div><div class="card-b row">${mates.map(m=>`<span class="chip st-${m.status} ${m.role==='قائد فريق'?'lead':''}" style="cursor:default"><span class="d"></span>${esc(m.name)}</span>`).join('')}</div></section>`:''}
     ${praise.length?`<section class="card"><div class="card-h"><h3>${ic('heart')} كلمات شكر لك</h3></div><div class="card-b stack" style="gap:8px">${praise.map(n=>`<div class="note ${n.kind}"><div class="small">${n.kind==='award'?`<b>${esc(n.title)} +${n.pts}</b> `:''}${esc(n.text||'')}</div>${n.stars?stars(n.stars):''}</div>`).join('')}</div></section>`:''}
@@ -2808,9 +3059,9 @@ function portalGami(vid){
   const g=gami(vid); const c=cfg();
   const rk=zoneRanking(); const myZ=S.volunteers[vid]?.zone; const zi=rk.findIndex(x=>x.z.id===myZ);
   const chal = zi>=0 ? `<section class="card card-b stack" style="gap:6px"><div class="row" style="justify-content:space-between"><h3>${ic('crowd')} تحدي الزونات اليوم</h3><span class="pill ${zi===0?'ok':'accent'} nodot num">فريقك ${zi+1} من ${rk.length}</span></div><div class="small"><b>${CHAL[c.challenge||'nolate'].t}</b>: ${CHAL[c.challenge||'nolate'].d}</div><div class="small muted">${esc(rk[zi].val)}${zi>0?` · المتصدر: فريق ${esc(rk[0].z.name)}`:' · فريقك متصدر، حافظوا عليه!'}</div></section>` : '';
-  const lb=leaderboard(); const rank=lb.findIndex(x=>x.v.id===vid)+1;
+  const lb=leaderboard(); const rank=lb.findIndex(x=>x.v.id===vid)+1; const zlb=lb.filter(x=>x.v.zone===myZ); const zrank=zlb.findIndex(x=>x.v.id===vid)+1;
   return `${chal}<section class="card"><div class="card-h"><h3>${ic('trophy')} نقاطي وملصقاتي</h3><div class="row">${levelPill(g.level)}<button class="btn sm" data-act="cert" data-id="${vid}">${ic('cert')} شهادتي</button></div></div><div class="card-b stack" style="gap:12px">
-    <div class="row" style="justify-content:space-between;align-items:flex-end"><div><span class="num" style="font-family:var(--font-display);font-size:2.2rem;font-weight:700;line-height:1">${g.p}</span> <span class="muted">نقطة</span></div>${c.showBoard!==false?`<span class="pill accent nodot num">ترتيبك ${rank} من ${lb.length}</span>`:''}</div>
+    <div class="row" style="justify-content:space-between;align-items:flex-end"><div><span class="num" style="font-family:var(--font-display);font-size:2.2rem;font-weight:700;line-height:1">${g.p}</span> <span class="muted">نقطة</span></div>${c.showBoard!==false?`<span class="pill accent nodot num">ترتيبك ${rank} من ${lb.length}</span>${zrank?`<span class="pill nodot num">في زونك ${zrank} من ${zlb.length}</span>`:''}`:''}</div>
     ${g.next?`<div class="bar"><i style="width:${Math.round(g.prog*100)}%;background:${g.next.c}"></i></div><div class="tiny muted">باقي <b class="num">${g.next.min-g.p}</b> نقطة وتوصل المستوى ${g.next.t}</div>`:'<div class="small" style="color:var(--ok)">وصلت أعلى مستوى!</div>'}
     <div class="row" style="justify-content:space-between">${flameHtml(g.streak, true)}<span class="small muted">${ic('gift','icon" style="width:14px;height:14px')} باقي <b class="num">${g.nextBoxIn}</b> نقطة للصندوق الجاي</span></div>
     <div class="tiny muted">جمعت ${g.badges.length+(g.legends||[]).length} ملصق. الملصقات الرمادية لسا تقدر تجمعها:</div>
@@ -3011,6 +3262,19 @@ function lostCard(){
   ${open.length?`<div class="list">${open.map(x=>`<div class="li" style="flex-wrap:wrap"><span class="pill praise">${LOST_T[x.kind]}</span><div class="grow"><div class="t">${esc(x.desc)}</div><div class="s">آخر مشاهدة: ${esc(zName(x.zone))} · ${ago(x.at)}${x.contact?' · ولي الأمر: '+esc(x.contact):''}</div></div><button class="btn sm ok" data-act="lost-found" data-id="${x.id}">${ic('check')} تم العثور</button><button class="btn ghost sm" data-act="lost-close" data-id="${x.id}" aria-label="إغلاق">${ic('x')}</button></div>`).join('')}</div>`
   :`<div class="empty small">البلاغ يوصل فوراً لكل المتطوعين وشاشة نقطة التسجيل، ومن يلقاه يضغط "لقيته" وياخذ ${PTS.finder} نقطة.</div>`}</section>`;
 }
+
+function attendDash(){
+  const all=allVols(); const cnt=s=>all.filter(v=>v.status===s).length;
+  const ds=dayStart(); const idle=all.filter(v=>v.status==='idle').sort((a,b)=>a.name.localeCompare(b.name,'ar'));
+  const out=all.filter(v=>v.status==='out' && v.outAt>=ds);
+  return `<div class="kpis">${kpi(cnt('active')+cnt('break'),'حاضرين الحين','var(--ok)')}${kpi(cnt('break'),'في استراحة','var(--warn)')}${kpi(idle.length,'ما حضروا','var(--idle)')}${kpi(out.length,'انصرفوا اليوم','var(--idle)')}</div>
+  ${pingCard()}
+  ${prayerCard()}
+  ${selfieCard()}
+  ${shiftsCard()}
+  <section class="card"><div class="card-h"><h2>⏳ ما حضروا للحين</h2><span class="pill nodot num">${idle.length}</span></div>
+    ${idle.length?`<div class="list">${idle.map(v=>`<div class="li">${avatar(v.id)}<div class="grow"><div class="t">${esc(v.name)}</div><div class="s">${esc(zName(v.zone))}${v.phone?` · <span class="num" dir="ltr">${esc(v.phone)}</span>`:''}</div></div>${v.phone?`<a class="btn sm" href="tel:${esc(String(v.phone).replace(/[^\d+]/g,''))}">${ic('phone')} اتصال</a>`:''}<button class="btn sm ok" data-act="st" data-id="${v.id}" data-s="active">${ic('in')} حضور</button></div>`).join('')}</div>`:'<div class="empty small">الكل حضر 👏</div>'}</section>`;
+}
 function shiftsCard(){
   const {late,soon,over}=shiftInfo(); const called=calledReserves(); const res=reserves();
   if(!late.length && !soon.length && !over.length && !called.length && !vols().some(v=>v.shiftStart)) return '';
@@ -3045,7 +3309,7 @@ function lostModal(){
 /* ---------- شاشة العمليات ---------- */
 function wallOpsView(){
   const all=vols(); const cnt=s=>all.filter(v=>v.status===s).length; const st=zoneStats();
-  const alerts=Object.values(S.alerts).filter(a=>!a.resolved).sort((a,b)=>b.at-a.at);
+  const alerts=Object.values(S.alerts).filter(a=>!a.resolved && !opsAlert(a)).sort((a,b)=>b.at-a.at);
   const pk=peaks().filter(p=>peakState(p)!=='past').slice(0,4); const ms=liveMissions(); const lost=openLost();
   const logs=Object.values(S.logs).filter(l=>l.type!=='energy').sort((a,b)=>b.at-a.at).slice(0,7);
   const {late}=shiftInfo(); const em=cfg().emergency;
@@ -3157,6 +3421,7 @@ function honorsView(){
   const lvlCount=LEVELS.map(l=>({l, n:lb.filter(x=>x.g.level===l).length}));
   return `<div class="section-title"><div><h2>التحفيز والتكريم</h2><p class="small muted" style="margin:2px 0 0">النقاط والملصقات تنحسب تلقائياً من الحضور والانضباط والدعم والإشادات، وكل متطوع يشوفها في حسابه.</p></div><button class="btn sm" data-act="copy-honors">${ic('copy')} نسخ قائمة التكريم</button></div>
   <div class="kpis">${lvlCount.map(x=>kpi(x.n,'مستوى '+x.l.t,x.l.c)).join('')}</div>
+  ${(()=>{ const rows=zones().filter(z=>!attendOnly(z)).map(z=>({z, top:lb.filter(x=>x.v.zone===z.id && x.g.p>0)[0]})).filter(x=>x.top); return rows.length?`<section class="card"><div class="card-h"><h2>⭐ نجم كل زون</h2><span class="tiny muted">كل زون له نجمه، عشان العدالة بين الزونات الكبيرة والصغيرة</span></div><div class="lead-row">${rows.map(x=>`<button class="lead-chip" data-act="open-vol" data-id="${x.top.v.id}" style="--zc:${esc(x.z.color)}">${avatar(x.top.v.id,'av')}<div><b>${esc(x.top.v.name)}</b><span class="tiny muted">${esc(x.z.name)} · <span class="num">${x.top.g.p}</span> نقطة</span></div></button>`).join('')}</div></section>`:''; })()}
   ${(()=>{ const type=cfg().challenge||'nolate'; const rk=zoneRanking(); return `<section class="card"><div class="card-h"><h2>${ic('crowd')} تحدي الزونات اليوم</h2><div class="row"><button class="btn sm" data-act="chal-announce" ${rk.length?'':'disabled'}>${ic('megaphone')} أعلن الفائز</button><button class="btn sm primary" data-act="chal-reward" ${rk.length?'':'disabled'}>${ic('gift')} كافئ الفريق الفائز</button></div></div>
     <div class="card-b stack" style="gap:12px">
       <div class="seg" role="group" aria-label="نوع التحدي">${Object.entries(CHAL).map(([k,c])=>`<button aria-pressed="${type===k}" data-act="chal-set" data-k="${k}">${c.t}</button>`).join('')}</div>
@@ -3305,7 +3570,7 @@ const ACT = {
   pull: el=>pullModal(el.dataset.z),
   'apply-one': el=>{ const m=suggestions()[+el.dataset.i]; if(m){ moveVol(m.vid,m.to); toast(`تم نقل ${S.volunteers[m.vid]?.name} إلى ${zName(m.to)}`,'ok'); } },
   'apply-all': async ()=>{ const ms=suggestions(); if(!await askConfirm('تنفيذ كل الاقتراحات',`سيتم نقل ${ms.length} متطوع حسب الاقتراحات.`,'نفّذ')) return; for(const m of ms){ moveVol(m.vid,m.to); if(DB) await sleep(40); } toast(`تم نقل ${ms.length} متطوع`,'ok'); },
-  'alert-resolve': el=>{ const a=S.alerts[el.dataset.id]; if(a) put('alerts',el.dataset.id,{...a,resolved:true,resolvedAt:now()}); },
+  'alert-resolve': el=>{ const a=S.alerts[el.dataset.id]; if(a) put('alerts',el.dataset.id,{...a,resolved:true,resolvedAt:now(),resolvedBy:myStaff()?.name||'المشرف'}); },
   'alert-raise': el=>{ const a=S.alerts[el.dataset.id]; if(!a) return; const c=cfg(); const zs=c.zones.map(z=>z.id===a.zone?{...z,crowd:Math.min(3,(z.crowd??1)+1)}:z); put('config','main',{...c,zones:zs}); toast('تم رفع مستوى الزحمة','ok'); },
   sel: el=>{ const id=el.dataset.id; UI.sel.has(id)?UI.sel.delete(id):UI.sel.add(id); scheduleRender(); },
   'sel-col': el=>{ const z=el.dataset.z; vols().filter(v=>(z?v.zone===z:!zoneById(v.zone)) && !(UI.hideOut&&v.status==='out')).forEach(v=>UI.sel.add(v.id)); scheduleRender(); },
@@ -3353,6 +3618,20 @@ const ACT = {
     const out=[]; for(const v0 of list0){ const v=S.volunteers[v0.id]; if(!v) continue; const pin=randPin(); put('secrets', String(v.code), {...(secretOf(v)||{phone:v.phone||''}), vid:v0.id, pinHash:pinHash(pin,v.code)}); put('volunteers', v0.id, (({credSent,...r})=>r)(S.volunteers[v0.id])); out.push({id:v0.id, name:v.name, phone:v.phone||secretOf(v)?.phone||'', code:v.code, pin}); if(DB) await sleep(40); }
     credsModal(out); },
   'creds-file': ()=>openModal(`<div class="modal-h"><h2>📲 إرسال بيانات الدخول</h2><button class="btn ghost sm" data-act="close-modal" aria-label="إغلاق">${ic('x')}</button></div><div class="modal-b stack"><p class="small muted" style="margin:0">اختاري ملف بيانات الدخول اللي نزلتيه بعد الاستيراد، وترجع لك قائمة الإرسال مع علامات ✓ اللي أرسلتيها قبل.</p><label class="btn primary">اختيار الملف<input type="file" accept=".csv,text/csv" data-creds-file hidden></label></div>`),
+  'al-f': el=>{ UI.alF=el.dataset.f; scheduleRender(); },
+  'al-t': el=>{ UI.alT=el.dataset.t; scheduleRender(); },
+  'al-work': el=>{ const a=S.alerts[el.dataset.id]; if(a) put('alerts',el.dataset.id,{...a, working:now(), workBy:myStaff()?.name||'المشرف'}); toast('صار البلاغ قيد المتابعة','ok'); },
+  'al-done': async el=>{ const a=S.alerts[el.dataset.id]; if(!a) return; const note=(window.prompt('ملاحظة عن الحل (اختياري):','')||'').trim().slice(0,200); put('alerts',el.dataset.id,{...a, resolved:true, resolvedAt:now(), resolvedBy:myStaff()?.name||'المشرف', note}); toast('تم حل البلاغ ✅','ok'); },
+  'al-reopen': el=>{ const a=S.alerts[el.dataset.id]; if(a) put('alerts',el.dataset.id,{...a, resolved:false, resolvedAt:null}); },
+  ping: el=>{ const id=el.dataset.id; const v=S.volunteers[id]; if(!v) return; if(v.status==='idle'||v.status==='out') return toast('هذا المتطوع مو حاضر الحين','warn'); put('volunteers', id, {...v, ping:{at:now(), by:myStaff()?.name||'المشرف'}}); toast(`وصله "وينك؟" 📲`,'ok'); },
+  'ping-reply': el=>{ const vid=getSes()?.id; const v=S.volunteers[vid]; if(!v?.ping) return; put('volunteers', vid, {...v, ping:{...v.ping, reply:el.dataset.r, replyAt:now()}}); toast('وصل ردك للمشرف 👍','ok'); },
+  'hosp-done': el=>{ const k=el.dataset.k; const h=hospDay(); const v=['cleanM','cleanF'].includes(k)?[...(h[k]||[]), now()]:now(); put('config','main',{...cfg(), hosp:{...h, day:dayKey(), [k]:v}}); toast('تم ✓','ok'); },
+  'sup-new': ()=>openModal(`<div class="modal-h"><h2>📝 ناقص شي</h2><button class="btn ghost sm" data-act="close-modal" aria-label="إغلاق">${ic('x')}</button></div><form data-form="sup"><div class="modal-b"><input class="input" name="text" required placeholder="مثال: موية، أكواب، مناديل في غرفة المتطوعات" maxlength="120"></div><div class="modal-f"><button class="btn primary">إضافة</button></div></form>`),
+  'dalal-new': ()=>openModal(`<div class="modal-h"><h2>🔔 تنبيه دلال</h2><button class="btn ghost sm" data-act="close-modal" aria-label="إغلاق">${ic('x')}</button></div><form data-form="dalal"><div class="modal-b"><label class="small muted">وش الناقص أو المطلوب؟</label><textarea class="input" name="text" required maxlength="200" placeholder="مثال: الموية خلصت في غرفة المتطوعات" style="min-height:80px"></textarea></div><div class="modal-f"><button class="btn primary">إرسال التنبيه</button></div></form>`),
+  'pray-go': el=>{ const vid=getSes()?.id; const p=prayerNow(); if(!vid||!p) return; const c=canPray(vid,p); if(!c.ok) return toast(c.r?.g===2?`دورك بعد ما يرجع ${firstName(c.wait?.name||'')}`:'دورك يبدأ مع الأذان','warn'); const v=S.volunteers[vid]; put('volunteers',vid,{...v, prayer:{p:p.k, day:dayKey(), out:now()}}); addLog(vid,'prayer_out',{by:'self', p:p.k}); toast('تقبّل الله 🕌','ok'); },
+  'pray-back': el=>{ const vid=getSes()?.id; const p=prayerNow(); const v=S.volunteers[vid]; if(!v?.prayer) return; const late=now()>v.prayer.out+(prayCfg().dur||20)*60000; put('volunteers',vid,{...v, prayer:{...v.prayer, back:now()}}); addLog(vid,'prayer_in',{by:'self', late, p:v.prayer.p}); toast(late?'أهلاً بعودتك':'أهلاً بعودتك، +5 نقاط انضباط 👏','ok'); },
+  'zone-grp': el=>{ const c=cfg(); put('config','main',{...c, zones:c.zones.map(z=>z.id===el.dataset.z?{...z, grp:el.dataset.g}:z)}); toast('تم الحفظ','ok'); },
+  'pray-toggle': el=>{ put('config','main',{...cfg(), prayer:{...prayCfg(), enabled:el.checked}}); },
   'wa-mode': el=>{ lsSet('waMode', el.dataset.m); credsModal(CREDS_LAST); },
   'cred-sent': el=>{ el.classList.remove('ok'); el.classList.add('ghost'); el.textContent='✓ تم الإرسال'; const id=el.dataset.id; const v=S.volunteers[id]; if(v && !v.credSent) put('volunteers', id, {...v, credSent:now()}); setTimeout(()=>{ const n=$('#cred-sent-n'); if(n) n.textContent=CREDS_LAST.filter(x=>S.volunteers[x.id]?.credSent).length; },200); return true; },
   'creds-dl': async ()=>{ const q=x=>'"'+String(x??'').replace(/"/g,'""')+'"'; const data='﻿'+[['الاسم','الجوال','رقم المتطوع','الرمز السري','الرابط'].map(q).join(','), ...CREDS_LAST.map(x=>[x.name,x.phone||'',x.code,x.pin,appUrl()].map(q).join(','))].join('\n'); try{ await DL.save({filename:`بيانات-دخول-المتطوعين-${new Date().toISOString().slice(0,10)}.csv`, data:new Blob([data],{type:'text/csv'})}); toast('تم تنزيل الملف، احفظيه في مكان آمن','ok'); }catch{ try{ await navigator.clipboard.writeText(data); toast('تم نسخ البيانات','ok'); }catch{ toast('تعذر التنزيل','warn'); } } },
@@ -3378,10 +3657,10 @@ const ACT = {
   'prof-cancel': ()=>{ UI.profEdit=false; scheduleRender(); },
   'mini-toggle': el=>{ put('config','main',{...cfg(), mini:{...miniCfg(), enabled:el.checked}}); },
   'mini-skipz': el=>{ UI.miniSkip=[...(UI.miniSkip||[]), el.dataset.z]; scheduleRender(); },
-  'mini-skip': ()=>{ UI.miniSkip=[]; put('config','main',{...cfg(), miniRound:now()}); toast('تم التخطي، الجولة الجاية بعد '+miniCfg().every+' دقيقة','ok'); },
+  'mini-skip': ()=>{ UI.miniSkip=[]; const c=cfg(); put('config','main',{...c, miniRounds:{...(c.miniRounds||{}), ...Object.fromEntries(zones().map(z=>[z.id,now()]))}}); toast('تم التخطي، الجولة الجاية بعد '+miniCfg().every+' دقيقة','ok'); },
   'mini-send': async ()=>{ const m=miniCfg(); const picks=miniPicks(); const t=now(); let n=0;
     for(const p of picks) for(const v of p.vs){ const cur=S.volunteers[v.id]; if(!cur) continue; put('volunteers', v.id, {...cur, mini:{at:t, until:t+m.min*60000}}); addLog(v.id,'mini',{by:'admin', min:m.min}); n++; if(DB) await sleep(30); }
-    UI.miniSkip=[]; put('config','main',{...cfg(), miniRound:t}); toast(`أُرسل ${n} للاستراحة القصيرة ☕`,'ok'); },
+    UI.miniSkip=[]; { const c=cfg(); put('config','main',{...c, miniRounds:{...(c.miniRounds||{}), ...Object.fromEntries(zones().map(z=>[z.id,t]))}}); } toast(`أُرسل ${n} للاستراحة القصيرة ☕`,'ok'); },
   'pay-done': el=>{ const id=el.dataset.id; markPaid(id); toast(`تم: ${S.volunteers[id]?.name}`,'ok'); },
   'pay-undo': el=>{ const id=el.dataset.id; const last=Object.entries(S.payouts).filter(([,p])=>p.v===id).sort((a,b)=>b[1].at-a[1].at)[0]; if(last) del('payouts', last[0]); },
   'pay-all': async el=>{ const due=balRows().filter(r=>r.b.bal>0 && r.pi); if(!await askConfirm('تعليم الكل',`تأكيد إن ${due.length} تحويل تمت؟ استخدمها بعد ما تنفذين التحويل الجماعي من البنك.`,'تأكيد')) return; for(const r of due){ markPaid(r.v.id,'bulk'); if(DB) await sleep(40); } toast(`تم تعليم ${due.length} تحويل`,'ok'); },
@@ -3489,6 +3768,11 @@ const FORMS = {
     if(id){ const v=S.volunteers[id]; const zone=fd.get('zone'); const sec=secretOf(v); if(sec && (fd.get('phone')||'')!==(sec.phone||'')) put('secrets', v.code, {...sec, phone:(fd.get('phone')||'').trim()}); if(zone!==v.zone) moveVol(id,zone); put('volunteers',id,{...S.volunteers[id],name,phone:fd.get('phone'),role:fd.get('role'),zone,shiftStart:fd.get('shiftStart')||'',shiftEnd:fd.get('shiftEnd')||'',reserve:!!fd.get('reserve')}); closeModal(); toast('تم الحفظ','ok'); }
     else { const pin=(fd.get('pin')||'').trim(); if(pin && !/^\d{6}$/.test(pin)) return toast('الرمز لازم 6 أرقام','warn'); const r=createVolunteer({name,phone:fd.get('phone'),role:fd.get('role'),zone:fd.get('zone'),pin:pin||null,shiftStart:fd.get('shiftStart')||'',shiftEnd:fd.get('shiftEnd')||'',reserve:!!fd.get('reserve')}); credsModal([r]); }
   },
+  roll: f=>{ const vid=getSes()?.id; const zid=f.dataset.z; const team=allVols().filter(v=>v.zone===zid && v.id!==vid && (v.status==='active'||v.status==='break')); const present=new Set([...new FormData(f).getAll('p'), ...team.filter(v=>v.status==='break'||onMini(v)).map(v=>v.id)]); const absent=team.filter(v=>!present.has(v.id)).map(v=>v.id); addLog(vid,'roll',{zone:zid, present:[...present], absent}); toast(absent.length?`وصل للمشرفة: ${absent.length} غايب`:'شكراً، الفريق كامل 👏','ok'); },
+  sup: f=>{ const t=String(new FormData(f).get('text')||'').trim(); if(!t) return; put('alerts', uid('a'), {type:'supply', text:t, zone:'', by:'', byName:myStaff()?.name||'الضيافة', at:now(), resolved:false}); closeModal(); toast('انضاف للنواقص','ok'); },
+  dalal: f=>{ const t=String(new FormData(f).get('text')||'').trim(); if(!t) return; put('alerts', uid('a'), {type:'dalal', text:t, zone:'', by:'', byName:myStaff()?.name||'الضيافة', at:now(), resolved:false});
+    const msg=`🔔 تنبيه من الضيافة (${myStaff()?.name||'فاطمة'}):\n${t}`;
+    openModal(`<div class="modal-h"><h2>✅ وصل التنبيه لدلال</h2><button class="btn ghost sm" data-act="close-modal" aria-label="إغلاق">${ic('x')}</button></div><div class="modal-b stack"><p class="small" style="margin:0">طلع عندها في المنصة. ولو تبين تتأكدين إنه وصلها، أرسليه واتساب كمان:</p><a class="btn ok" href="${esc(waSmart(DALAL.phone, msg))}" target="_blank" rel="noopener">${ic('phone')} إرسال واتساب لدلال</a></div><div class="modal-f"><button class="btn" data-act="close-modal">تم</button></div>`); },
   'fix-phones': async f=>{
     const norm=t=>String(t||'').replace(/[‎‏‪-‮]/g,'').replace(/\s+/g,' ').trim();
     const book={}; String(new FormData(f).get('text')||'').split(/\n+/).forEach(l=>{ const parts=l.split(/[,،\t;|]+/).map(norm).filter(Boolean); const ph=(parts.find(x=>/^\+?\d[\d\s-]{6,}$/.test(x))||'').replace(/[\s-]/g,''); const nm=parts.find(x=>!/^\+?\d[\d\s-]{6,}$/.test(x)); if(nm&&ph) book[nm]=ph; });
@@ -3594,6 +3878,8 @@ document.addEventListener('change', e=>{
     const list=rows.map(c=>{ const v=findByCode(c[2]); return v?{id:v.id, name:c[0]||v.name, phone:c[1]||v.phone||'', code:c[2], pin:c[3]}:null; }).filter(x=>x&&x.pin);
     if(!list.length) return toast('ما لقيت بيانات في الملف','warn'); credsModal(list); }).catch(()=>toast('تعذر قراءة الملف','warn')); }
   if('profPhoto' in el.dataset && el.files && el.files[0]){ shrinkPhoto(el.files[0]).then(u=>{ const h=$('#ph-data'); if(h) h.value=u; const pv=$('#ph-prev'); if(pv) pv.innerHTML=`<img src="${u}" alt="">`; }).catch(()=>toast('تعذر قراءة الصورة','warn')); }
+  if(el.dataset.staffZone){ const e=el.dataset.staffZone; const c=cfg(); const cur={...STAFF_DEFAULT[e], ...((c.staff||{})[e]||{})}; const ids=[...document.querySelectorAll(`input[data-staff-zone="${e}"]:checked`)].map(x=>x.value); put('config','main',{...c, staff:{...(c.staff||{}), [e]:{...cur, zones:ids}}}); toast('تم الحفظ','ok'); }
+  if(el.dataset.pray){ const k=el.dataset.pray; const pc=prayCfg(); if(k==='dur') put('config','main',{...cfg(), prayer:{...pc, dur:Math.max(5,Math.min(60,+el.value||20))}}); else put('config','main',{...cfg(), prayer:{...pc, times:{...(pc.times||{}), [k]:el.value}}}); toast('تم الحفظ','ok'); }
   if(el.dataset.mini){ const k=el.dataset.mini; const c=cfg(); put('config','main',{...c, mini:{...miniCfg(), [k]:Math.max(1,+el.value||1)}}); toast('تم الحفظ','ok'); }
   if(el.dataset.reward){ const c=cfg(); put('config','main',{...c, rewards:{...(c.rewards||{}), [el.dataset.reward]:Math.max(0,+el.value||0)}}); toast('تم الحفظ','ok'); }
   if(el.dataset.change==='payDay'){ UI.payDay=el.value; scheduleRender(); }
