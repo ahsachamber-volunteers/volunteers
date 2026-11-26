@@ -4045,12 +4045,13 @@ async function boot(){
   firebase.initializeApp(FIREBASE_CONFIG);
   DB=firebase.firestore();
   try{ DB.settings({ignoreUndefinedProperties:true, experimentalAutoDetectLongPolling:true, merge:true}); }catch{}
-  try{ await DB.enablePersistence({synchronizeTabs:true}); }catch{}
+  /* بدون ذاكرة محفوظة: كانت تعلّق سفاري بعد انقطاع الحصة */
+  try{ indexedDB.deleteDatabase('firestore/[DEFAULT]/volunteers-event/main'); }catch{}
   S.mode='db';
   /* إصلاح تلقائي: لو علّق التحميل 12 ثانية، نمسح الذاكرة المحفوظة ونعيد الفتح مرة وحدة */
   setTimeout(async ()=>{ if(S.ready) return; let n=0; try{ n=+sessionStorage.getItem('vpFix')||0; }catch{} if(n>=1) return;
     try{ sessionStorage.setItem('vpFix', String(n+1)); }catch{}
-    try{ await DB.terminate(); }catch{} try{ await DB.clearPersistence(); }catch{} location.reload(); }, 12000);
+    location.reload(); }, 15000);
   firebase.auth().onAuthStateChanged(async user=>{
     if(LOGIN_BUSY){ AUTH.user=user; return; }
     stopListeners(); S.ready=false;
