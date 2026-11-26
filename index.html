@@ -3253,10 +3253,10 @@ function credsModal(list){
     <div class="row small" style="gap:8px">طريقة الفتح: <div class="seg" role="group">${[['app','برنامج واتساب 💻'],['web','واتساب ويب'],['phone','الجوال 📱']].map(([k,t])=>`<button aria-pressed="${(lsGet('waMode')||'app')===k}" data-act="wa-mode" data-m="${k}">${t}</button>`).join('')}</div></div>
     <div class="tiny muted">أُرسل <b class="num" id="cred-sent-n">${list.filter(x=>S.volunteers[x.id]?.credSent).length}</b> من <b class="num">${list.length}</b></div>
     <div class="cred cred3"><span class="tiny muted">الاسم</span><span class="tiny muted">الرقم</span><span class="tiny muted">الرمز</span><span class="tiny muted"></span>
-    ${list.map(x=>{ const sent=!!S.volunteers[x.id]?.credSent; return `<span>${esc(x.name)}</span><b class="num">${esc(x.code)}</b><b class="num">${esc(x.pin)}</b><span>${x.phone?`<a class="btn sm ${sent?'ghost':'ok'} cred-wa" data-act="cred-sent" data-id="${esc(x.id||'')}" href="${esc(waSmart(x.phone,credMsg(x)))}" ${(lsGet('waMode')||'app')==='app'?'':`target="wa_send"`} rel="noopener">${sent?'✓ تم الإرسال':'إرسال واتساب'}</a>`:'<span class="tiny muted">بدون جوال</span>'}</span>`; }).join('')}</div>
+    ${list.map(x=>{ const sent=!!S.volunteers[x.id]?.credSent; return `<span>${esc(x.name)}${x.phone?`<br><span class="tiny muted num" dir="ltr">${esc(x.phone)}</span>`:''}</span><b class="num">${esc(x.code)}</b><b class="num">${esc(x.pin)}</b><span>${x.phone?`<a class="btn sm ${sent?'ghost':'ok'} cred-wa" data-act="cred-sent" data-id="${esc(x.id||'')}" href="${esc(waSmart(x.phone,credMsg(x)))}" ${(lsGet('waMode')||'app')==='app'?'':`target="wa_send"`} rel="noopener">${sent?'✓ تم الإرسال':'إرسال واتساب'}</a>`:'<span class="tiny muted">بدون جوال</span>'}</span>`; }).join('')}</div>
   </div><div class="modal-f"><button class="btn" data-act="close-modal">تم</button></div>`);
 }
-let CREDS_LAST=[];
+let CREDS_LAST=[]; let IMPORTING=false;
 function importModal(){
   openModal(`<div class="modal-h"><h2>استيراد قائمة متطوعين</h2><button class="btn ghost sm" data-act="close-modal" aria-label="إغلاق">${ic('x')}</button></div>
   <form data-form="import"><div class="modal-b">
@@ -3493,7 +3493,13 @@ const FORMS = {
     const norm=t=>String(t||'').replace(/[‎‏‪-‮]/g,'').replace(/\s+/g,' ').trim();
     const book={}; String(new FormData(f).get('text')||'').split(/\n+/).forEach(l=>{ const parts=l.split(/[,،\t;|]+/).map(norm).filter(Boolean); const ph=(parts.find(x=>/^\+?\d[\d\s-]{6,}$/.test(x))||'').replace(/[\s-]/g,''); const nm=parts.find(x=>!/^\+?\d[\d\s-]{6,}$/.test(x)); if(nm&&ph) book[nm]=ph; });
     if(!Object.keys(book).length) return toast('الصقي القائمة أول','warn');
-    const btn=f.querySelector('.btn.primary'); if(btn){ btn.disabled=true; btn.textContent='جارٍ الإصلاح…'; }
+    const btn=f.querySelector('.btn.primary'); if(btn){ if(btn.disabled) return; btn.disabled=true; btn.textContent='جارٍ الإصلاح…'; }
+    // 0) حذف السجلات المكررة لنفس الاسم
+    let dupNames=0; const byName={}; vols().forEach(v=>{ (byName[norm(v.name)] ||= []).push(v); });
+    for(const g of Object.values(byName).filter(g=>g.length>1)){
+      const score=v=>(S.profiles[v.id]?4:0)+((idx().byV[v.id]||[]).length?2:0)+(v.credSent?1:0);
+      g.sort((a,b)=>score(b)-score(a) || (a.createdAt||0)-(b.createdAt||0));
+      for(const v of g.slice(1)){ const sec=S.secrets[String(v.code)]; if(sec && sec.vid===v.id) del('secrets', String(v.code)); del('volunteers', v.id); dupNames++; if(DB) await sleep(40); } }
     // 1) أرقام فريدة
     const groups={}; vols().forEach(v=>{ (groups[String(v.code)] ||= []).push(v); });
     for(const g of Object.values(groups).filter(g=>g.length>1)){ g.sort((a,b)=>(a.createdAt||0)-(b.createdAt||0)); for(const v of g.slice(1)){ const nc=nextCode(); const cur=S.volunteers[v.id]; await put('volunteers', v.id, {...cur, code:nc}); S.volunteers[v.id]={...cur, code:nc}; S.secrets[nc]={vid:v.id}; if(DB) await sleep(50); } }
@@ -3515,10 +3521,13 @@ const FORMS = {
     closeModal(); openModal(`<div class="modal-h"><h2>تم الإصلاح ✅</h2><button class="btn ghost sm" data-act="close-modal" aria-label="إغلاق">${ic('x')}</button></div><div class="modal-b stack">
       <div>تصحّح جوال <b class="num">${changed.length}</b>${changed.length?`: <span class="small">${changed.map(esc).join('، ')}</span>`:''}</div>
       <div>يحتاجون رمز جديد <b class="num">${repin.length}</b>${repin.length?`: <span class="small">${repin.map(esc).join('، ')}</span>`:''}</div>
+      ${dupNames?`<div>انحذف <b class="num">${dupNames}</b> سجل مكرر لنفس الشخص</div>`:''}
       ${orphans?`<div class="small muted">انحذف ${orphans} رمز قديم ما له صاحب.</div>`:''}
       ${missing.length?`<div class="small" style="color:var(--warn)">ما لقيت بالقائمة: ${missing.map(esc).join('، ')}</div>`:''}
       <p class="small muted" style="margin:0">الحين اضغطي <b>🔑 رموز للي ما وصلتهم رسالة</b> عشان ترسلين للي تغيروا بس.</p></div><div class="modal-f"><button class="btn primary" data-act="close-modal">تم</button></div>`); },
   import: async f=>{
+    if(IMPORTING) return; IMPORTING=true; const ib=f.querySelector('.btn.primary'); if(ib){ ib.disabled=true; ib.textContent='جارٍ الإضافة…'; }
+    try{
     const lines=(new FormData(f).get('text')||'').split(/\n+/).map(l=>l.trim()).filter(Boolean);
     if(!lines.length) return;
     const out=[]; let skipped=0; const nrm=t=>String(t||'').replace(/[\u200e\u200f\u202a-\u202e\u00a0]/g,'').replace(/\s+/g,' ').trim(); const have=new Set(vols().map(v=>nrm(v.name)));
@@ -3532,6 +3541,7 @@ const FORMS = {
       if(DB) await sleep(40);
     }
     closeModal(); if(out.length) credsModal(out); toast(`تمت إضافة ${out.length} متطوع جديد${skipped?` · تخطيت ${skipped} موجودين`:''}`,'ok');
+    } finally { IMPORTING=false; }
   },
   note: f=>{ const text=$('#note-text').value.trim(); if(!text) return; put('notes',uid('n'),{v:UI.drawer,kind:UI.noteKind,text,stars:UI.noteStars||null,at:now()}); $('#note-text').value=''; UI.noteStars=0; $$('#note-stars button').forEach(b=>b.style.color='var(--line)'); toast('تم حفظ الملاحظة','ok'); },
   msg: f=>{ const fd=new FormData(f); const text=(fd.get('text')||'').trim(); if(!text) return; put('msgs',uid('m'),{text,target:fd.get('target'),at:now()}); f.reset(); if($('#modal').contains(f)) closeModal(); toast('تم إرسال التعميم','ok'); },
