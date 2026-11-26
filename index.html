@@ -732,6 +732,12 @@ body.printing #print-root{display:block}
 /* شاشة العرض بنفس خلفية البطاقة */
 body:has(.wall.nb) #wall-fx{background:var(--sheen)!important}
 body:has(.wall.nb) #wall-fx .fb{fill:#d9b38c!important}
+
+.lead-row{display:flex;flex-wrap:wrap;gap:10px;padding:14px 16px}
+.lead-chip{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-inline-start:4px solid var(--zc);border-radius:12px;padding:8px 12px;background:none;cursor:pointer;font:inherit;color:inherit;text-align:start}
+.lead-chip b{display:block;font-size:.9rem}
+.lead-banner{display:grid;gap:2px;text-align:center;padding:12px;border-radius:14px;background:linear-gradient(135deg,#C9A27E,#e7c9a8);color:#2b0b10}
+.lead-banner b{font-family:var(--font-display);font-size:1.1rem}
 </style>
 </head>
 <body>
@@ -1527,6 +1533,45 @@ function selfieCard(){
       <div class="sf-pair"><span class="sf-ph">${p?.photo?`<img src="${esc(p.photo)}" alt="الصورة الشخصية">`:'<i>بدون صورة</i>'}</span><span class="sf-ph live">${x.img?`<img src="${esc(x.img)}" alt="سيلفي الحضور">`:'<i>ما صوّر</i>'}</span></div>
       <b>${esc(v?.name||'')}</b><span class="tiny muted num">${fmtTime(x.at)}${!x.img?' · ⚠️ بدون سيلفي':!p?.photo?' · ⚠️ ما رفع صورته':''}</span></button>`; }).join('')}</div></section>`;
 }
+/* ---------- قائد اليوم (تلقائي بالتناوب) ---------- */
+const leadOn = () => cfg().autoLead!==false;
+let LEAD_BUSY=false, LEAD_AT=0;
+function pickLeader(z, members){
+  const fresh=members.filter(v=>!(v.ledDays||[]).length);
+  const pool=fresh.length?fresh:members.slice().sort((a,b)=>(a.ledDays||[]).length-(b.ledDays||[]).length).filter((v,_,a)=>(v.ledDays||[]).length===(a[0].ledDays||[]).length);
+  const scored=pool.map(v=>({v, p:gami(v.id).p}));
+  const max=Math.max(...scored.map(x=>x.p));
+  const top=scored.filter(x=>x.p===max);
+  return top[Math.floor(Math.random()*top.length)].v;
+}
+async function ensureLeaders(){
+  if(!leadOn() || LEAD_BUSY || getSes()?.role!=='admin' || now()-LEAD_AT<20000) return;
+  const today=dayKey(); const L=cfg().leaders||{}; const by=L.day===today?{...(L.byZone||{})}:{};
+  const st=zones().map(z=>({z, members:vols().filter(v=>v.zone===z.id)})).filter(x=>x.members.length);
+  const need=st.filter(x=>!by[x.z.id] || !S.volunteers[by[x.z.id]] || S.volunteers[by[x.z.id]].zone!==x.z.id);
+  if(L.day===today && !need.length) return;
+  LEAD_BUSY=true; LEAD_AT=now();
+  try{
+    // يوم جديد: رجّع قادة أمس لأدوارهم
+    if(L.day!==today){ for(const v of vols().filter(v=>v.autoLead)){ const cur=S.volunteers[v.id]; put('volunteers', v.id, (({autoLead,prevRole,...r})=>({...r, role:prevRole||'متطوع'}))(cur)); if(DB) await sleep(30); } }
+    const picks=[];
+    for(const x of need){ const members=x.members.filter(v=>!v.autoLead || v.zone===x.z.id); if(!members.length) continue; const v=pickLeader(x.z, members); by[x.z.id]=v.id; picks.push({z:x.z, v}); }
+    if(!picks.length && L.day===today) return;
+    if(DB){ const ok=await DB.runTransaction(async tx=>{ const ref=DB.doc('config/main'); const sn=await tx.get(ref); const cur=sn.data()?.leaders||{}; if(cur.day===today && picks.every(p=>cur.byZone?.[p.z.id])) return false; tx.update(ref,{leaders:{day:today, byZone:{...(cur.day===today?cur.byZone:{}), ...Object.fromEntries(picks.map(p=>[p.z.id,p.v.id]))}}}); return true; }).catch(()=>false); if(!ok) return; }
+    else put('config','main',{...cfg(), leaders:{day:today, byZone:by}});
+    for(const p of picks){ const cur=S.volunteers[p.v.id]; put('volunteers', p.v.id, {...cur, autoLead:true, prevRole:cur.autoLead?cur.prevRole:(cur.role||'متطوع'), role:'قائد فريق', ledDays:[...new Set([...(cur.ledDays||[]), today])]});
+      put('msgs', uid('m'), {text:`👑 قائد ${p.z.name} اليوم: ${p.v.name}. اختارته المنصة تلقائياً حسب الالتزام والنقاط، بالتوفيق للفريق!`, target:p.z.id, at:now()}); if(DB) await sleep(40); }
+    if(picks.length) toast(`👑 تم اختيار قادة اليوم: ${picks.map(p=>p.v.name.split(' ')[0]).join('، ')}`,'ok');
+  } finally { LEAD_BUSY=false; }
+}
+function leadersCard(){
+  if(!leadOn()) return '';
+  const L=cfg().leaders||{}; const today=dayKey(); if(L.day!==today) return '';
+  const rows=zones().map(z=>({z, v:S.volunteers[L.byZone?.[z.id]]})).filter(x=>x.v);
+  if(!rows.length) return '';
+  return `<section class="card"><div class="card-h"><h2>👑 قادة اليوم</h2><span class="tiny muted">اختيار تلقائي بالتناوب حسب النقاط</span></div><div class="lead-row">${rows.map(x=>`<button class="lead-chip" data-act="open-vol" data-id="${L.byZone[x.z.id]}" style="--zc:${esc(x.z.color)}">${avatar(L.byZone[x.z.id],'av')}<div><b>${esc(x.v.name)}</b><span class="tiny muted">${esc(x.z.name)}</span></div></button>`).join('')}</div></section>`;
+}
+function leaderBanner(vid){ const L=cfg().leaders||{}; if(L.day!==dayKey()) return ''; const z=Object.entries(L.byZone||{}).find(([,id])=>id===vid); if(!z) return ''; return `<div class="lead-banner">👑 <b>أنت قائد ${esc(zName(z[0]))} اليوم!</b><span>تستاهلها بالتزامك، فريقك يعتمد عليك 💪</span></div>`; }
 /* ---------- الاستراحة القصيرة الدورية ---------- */
 const miniCfg = () => ({enabled:true, every:60, per:1, min:7, ...(cfg().mini||{})});
 const onMini = v => !!(v && v.mini && v.status==='active' && now() < v.mini.until);
@@ -2032,6 +2077,7 @@ function render(){
   if(oldTicker){ const nt=app.querySelector('.ticker'); if(nt && nt.dataset.sig===oldTicker.dataset.sig) nt.replaceWith(oldTicker); }
   const lu=app.querySelector('.lvlup'); if(lu){ const k=getSes()?.id+':'+(lu.querySelector('h2')?.textContent||''); if(FX.lvl!==k){ FX.lvl=k; confetti(220); } }
   if(UI.kiosk.step==='done' && UI.kiosk.lu && !UI.kiosk.fx){ UI.kiosk.fx=true; confetti(220); }
+  if(S.ready && S.config) ensureLeaders();
   wallFx(getSes()?.role==='admin' && location.hash==='#ops-wall'); if(location.hash==='#ops-wall') countUp();
   checkGlory();
 }
@@ -2262,6 +2308,7 @@ function dashView(){
   </div></section>`:''}
   ${tickerHtml()}
   ${lostCard()}
+  ${leadersCard()}
   ${miniCard()}
   ${selfieCard()}
   ${payCard()}
@@ -2586,6 +2633,7 @@ function settingsView(){
     <div class="field"><label for="c-fat">تنبيه الإرهاق بعد عمل متواصل (ساعات)</label><input class="input num" id="c-fat" type="number" min="1" max="12" step="0.5" data-cfg="fatigueHours" data-num value="${c.fatigueHours||3}"></div>
   </div>
   <div class="card-b stack" style="gap:10px;border-top:1px solid var(--line)">
+    <label class="row"><input type="checkbox" data-act="lead-toggle" ${leadOn()?'checked':''}> <b>👑 قائد اليوم التلقائي</b> <span class="small muted">كل يوم تختار المنصة قائد لكل زون بالتناوب: الأعلى نقاط من اللي ما قادوا قبل. وأول يوم قرعة</span></label>
     <label class="row"><input type="checkbox" data-act="selfie-toggle" ${selfieOn()?'checked':''}> <b>📸 سيلفي الحضور</b> <span class="small muted">المتطوع يصوّر وجهه وقت تسجيل الحضور، وتطلع لك الصورة جنب صورته الشخصية</span></label>
     <label class="row"><input type="checkbox" data-act="mini-toggle" ${miniCfg().enabled?'checked':''}> <b>☕ الاستراحة القصيرة الدورية</b></label>
     <p class="small muted" style="margin:0">كل فترة تقترح عليك المنصة من كل زون شخص أو اثنين ياخذون استراحة قصيرة. ما تنخصم من رصيد الاستراحة، وتنحسب من ساعات العمل. الزونات الحرجة وقت الذروة والقادة مستثنين.</p>
@@ -2702,7 +2750,7 @@ function portalView(vid){
   const msgs=Object.values(S.msgs).filter(m=>m.target==='all'||m.target===v.zone).sort((a,b)=>b.at-a.at).slice(0,6);
   const praise=(idx().notesByV[vid]||[]).filter(n=>n.kind==='praise'||n.kind==='award');
   const mates=z?vols().filter(x=>x.zone===v.zone && x.id!==vid && (x.status==='active'||x.status==='break')):[];
-  const lead=mates.find(x=>x.role==='قائد فريق');
+  const LD=cfg().leaders; const ldId=LD?.day===dayKey()?LD.byZone?.[v.zone]:null; const lead=ldId? (ldId===vid?null:mates.find(x=>x.id===ldId)||(S.volunteers[ldId]?{...S.volunteers[ldId],id:ldId}:null)) : mates.find(x=>x.role==='قائد فريق');
   let timer='';
   const left=breakLeft(vid);
   if(v.status==='break'){ timer=`<div><div class="lbl">${left>=0?'متبقي من رصيد استراحتك اليوم':'تجاوزت رصيد الاستراحة'}</div><div class="timer" data-countdown="${now()+left}">${fmtClock(left)}</div></div>`; }
@@ -2712,6 +2760,7 @@ function portalView(vid){
     ${S.readonly?`<div class="banner warn" style="margin:0">${ic('alert')} هذا الجهاز للعرض فقط. سجّل حضورك من نقطة التسجيل أو عند المشرف.</div>`:''}
     ${lvlUpOverlay(vid)}
     ${goldBanner(v.zone)}
+    ${leaderBanner(vid)}
     ${miniBanner(v)}
     ${tickerHtml()}
     ${openLost().map(x=>`<div class="lost-banner"><b>${ic('eye')} ${LOST_T[x.kind]}</b><div>${esc(x.desc)}</div><div class="small" style="opacity:.85">آخر مشاهدة: ${esc(zName(x.zone))} · ${ago(x.at)}</div><button class="btn" data-act="lost-found" data-id="${x.id}">${ic('check')} لقيته</button></div>`).join('')}
@@ -3322,6 +3371,7 @@ const ACT = {
   'selfie-snap': ()=>{ const v=$('#sf-v'); if(!v||!v.videoWidth) return; const S0=320; const cv=document.createElement('canvas'); cv.width=S0; cv.height=S0; const x=cv.getContext('2d'); const m=Math.min(v.videoWidth,v.videoHeight); x.translate(S0,0); x.scale(-1,1); x.drawImage(v,(v.videoWidth-m)/2,(v.videoHeight-m)/2,m,m,0,0,S0,S0); let q=.8, u=cv.toDataURL('image/jpeg',q); while(u.length>45000&&q>.4){ q-=.1; u=cv.toDataURL('image/jpeg',q); } selfieDone({img:u}); },
   'selfie-skip': ()=>selfieDone({img:'', reason:'nocam'}),
   'selfie-cancel': ()=>selfieDone(null),
+  'lead-toggle': el=>{ put('config','main',{...cfg(), autoLead:el.checked}); },
   'selfie-toggle': el=>{ put('config','main',{...cfg(), selfie:el.checked}); },
   'wall-ops': ()=>{ UI.wallOps=!UI.wallOps; scheduleRender(); },
   'prof-edit': ()=>{ UI.profEdit=true; scheduleRender(); window.scrollTo(0,0); },
@@ -3471,16 +3521,17 @@ const FORMS = {
   import: async f=>{
     const lines=(new FormData(f).get('text')||'').split(/\n+/).map(l=>l.trim()).filter(Boolean);
     if(!lines.length) return;
-    const out=[];
+    const out=[]; let skipped=0; const nrm=t=>String(t||'').replace(/[\u200e\u200f\u202a-\u202e\u00a0]/g,'').replace(/\s+/g,' ').trim(); const have=new Set(vols().map(v=>nrm(v.name)));
     for(const l of lines){
       const parts=l.split(/[,،\t;|]+/).map(x=>x.trim()).filter(Boolean);
       const name=parts.find(p=>!/^\+?\d[\d\s-]{6,}$/.test(p)); if(!name) continue;
+      if(have.has(nrm(name))){ skipped++; continue; } have.add(nrm(name));
       const phone=parts.find(p=>/^\+?\d[\d\s-]{6,}$/.test(p))||'';
       const zp=parts.find(p=>p!==name && p!==phone); const zone = zp ? (zones().find(z=>z.name===zp || z.name.includes(zp) || zp.includes(z.name))?.id||'') : '';
       out.push(createVolunteer({name,phone:phone.replace(/[\s-]/g,''),zone}));
       if(DB) await sleep(40);
     }
-    closeModal(); if(out.length) credsModal(out); toast(`تمت إضافة ${out.length} متطوع`,'ok');
+    closeModal(); if(out.length) credsModal(out); toast(`تمت إضافة ${out.length} متطوع جديد${skipped?` · تخطيت ${skipped} موجودين`:''}`,'ok');
   },
   note: f=>{ const text=$('#note-text').value.trim(); if(!text) return; put('notes',uid('n'),{v:UI.drawer,kind:UI.noteKind,text,stars:UI.noteStars||null,at:now()}); $('#note-text').value=''; UI.noteStars=0; $$('#note-stars button').forEach(b=>b.style.color='var(--line)'); toast('تم حفظ الملاحظة','ok'); },
   msg: f=>{ const fd=new FormData(f); const text=(fd.get('text')||'').trim(); if(!text) return; put('msgs',uid('m'),{text,target:fd.get('target'),at:now()}); f.reset(); if($('#modal').contains(f)) closeModal(); toast('تم إرسال التعميم','ok'); },
