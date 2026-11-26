@@ -3979,7 +3979,11 @@ function startListeners(role){
   const slowT=setTimeout(()=>{ if(!S.ready){ S.slow=true; scheduleRender(); } }, 10000);
   const onErrFor = col => e=>{ clearTimeout(slowT); S.ready=true;
     if(e && e.code==='permission-denied' && role==='vol' && col!=='volunteers'){ console.warn('rules: no read access to', col); RULES_MISS.add(col); scheduleRender(); return; }
-    if(e && e.code==='permission-denied' && role==='vol'){ AUTH.volCode=null; toast('انتهت جلستك، سجّل دخولك من جديد','warn'); fbLogout(); }
+    if(e && e.code==='permission-denied' && role==='vol'){ VOL_RETRY=(VOL_RETRY||0)+1;
+      if(VOL_RETRY<=4){ setTimeout(async ()=>{ let ok=false; try{ const u=firebase.auth().currentUser; if(u){ const sn=await DB.collection('sessions').doc(u.uid).get({source:'server'}); ok=sn.exists; } }catch{ ok=true; }
+          if(ok && AUTH.volCode){ stopListeners(); startListeners('vol'); scheduleRender(); } else if(!ok){ AUTH.volCode=null; toast('انتهت جلستك، سجّل دخولك من جديد','warn'); fbLogout(); } }, 1500*VOL_RETRY); }
+      else { VOL_RETRY=0; AUTH.volCode=null; toast('تعذّر الدخول، سجّل دخولك من جديد','warn'); fbLogout(); }
+      scheduleRender(); return; }
     else if(e && e.code!=='permission-denied') toast('انقطع الاتصال بالبيانات. أعد فتح الصفحة.','crit');
     scheduleRender(); };
   const onErr = e=>{ AUTH.err=(e&&e.code)||'config'; onErrFor('config')(e); };
@@ -3989,13 +3993,13 @@ function startListeners(role){
     if((c==='secrets'||c==='meals'||c==='payinfo'||c==='payouts'||c==='profiles'||c==='selfies') && role!=='admin') return;
     if(role==='admin' && ROLE()==='hosp' && ['logs','notes','thanks','selfies','profiles','payinfo','payouts','meals','legend','missions','secrets','handover','lost','safety'].includes(c)) return;
     let q=DB.collection(c); if(c==='notes' && role!=='admin') q=q.where('kind','in',['praise','award','box']); if(c==='selfies') q=q.where('day','==',dayKey());
-    UNSUBS.push(q.onSnapshot(snap=>{ const o={}; snap.docs.forEach(d=>{ o[d.id]=d.data(); }); S[c]=o; if(c==='volunteers'||c==='secrets') mergeSecrets();
+    UNSUBS.push(q.onSnapshot(snap=>{ const o={}; snap.docs.forEach(d=>{ o[d.id]=d.data(); }); S[c]=o; if(c==='volunteers') VOL_RETRY=0; if(c==='volunteers'||c==='secrets') mergeSecrets();
       if(c==='volunteers' && role==='vol' && !PAY_SUB){ const me=findByCode(AUTH.volCode); if(me){ PAY_SUB=true;
         ['payinfo','payouts','profiles'].forEach(pc=>UNSUBS.push(DB.collection(pc).where('v','==',me.id).onSnapshot(sn=>{ const oo={}; sn.docs.forEach(d=>{ oo[d.id]=d.data(); }); S[pc]=oo; if(pc==='profiles') PROF_LOADED=true; invalidate(); scheduleRender(); }, e=>{ if(pc==='profiles') PROF_LOADED=true; onErrFor(pc)(e); }))); } }
       invalidate(); scheduleRender(); }, onErrFor(c)));
   });
 }
-let PAY_SUB=false, PROF_LOADED=false; const RULES_MISS=new Set();
+let PAY_SUB=false, PROF_LOADED=false; const RULES_MISS=new Set(); let VOL_RETRY=0;
 /* توفير القراءات: المتطوع يسمع لنفسه ولزونه وسجلاته فقط بدل الكل */
 let VZ={me:{}, zone:{}, zid:null, zun:null};
 function volListeners(onErrFor){
