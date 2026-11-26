@@ -3973,7 +3973,7 @@ function browserCaps(){
   DL = { save:({filename,data})=>{ const url=URL.createObjectURL(data instanceof Blob?data:new Blob([data])); const a=document.createElement('a'); a.href=url; a.download=filename; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url),4000); return Promise.resolve({status:'saved'}); } };
 }
 let UNSUBS=[];
-function stopListeners(){ PAY_SUB=false; PROF_LOADED=false; UNSUBS.forEach(u=>{ try{ u(); }catch{} }); UNSUBS=[]; COLS.forEach(c=>S[c]={}); invalidate(); }
+function stopListeners(){ try{ LISTEN_GEN++; }catch{} PAY_SUB=false; PROF_LOADED=false; UNSUBS.forEach(u=>{ try{ u(); }catch{} }); UNSUBS=[]; COLS.forEach(c=>S[c]={}); invalidate(); }
 function mergeSecrets(){ if(!AUTH.admin) return; Object.entries(S.volunteers).forEach(([id,v])=>{ const sec=S.secrets[v.code]; if(sec && v.phone!==sec.phone) S.volunteers[id]={...v, phone:sec.phone||''}; }); }
 function startListeners(role){
   const slowT=setTimeout(()=>{ if(!S.ready){ S.slow=true; scheduleRender(); } }, 10000);
@@ -3990,8 +3990,19 @@ function startListeners(role){
   const onErr = e=>{ window.LOADSTEP='ERR config '+((e&&e.code)||''); AUTH.err=(e&&e.code)||'config'; onErrFor('config')(e); };
   window.LOADSTEP=(window.LOADSTEP||'')+' · 6 waiting config ('+role+')';
   UNSUBS.push(DB.doc('config/main').onSnapshot({includeMetadataChanges:true}, sn=>{ if(!sn.exists && sn.metadata.fromCache) return; S.config = sn.exists ? sn.data() : null; AUTH.err=null; clearTimeout(slowT); S.ready=true; S.slow=false; invalidate(); scheduleRender(); }, onErr));
+  /* احتياط: لو تأخر البث المباشر، نجيب الإعدادات مرة وحدة مباشرة */
+  const gen=++LISTEN_GEN;
+  DB.doc('config/main').get().then(sn=>{ if(gen!==LISTEN_GEN) return; window.LOADSTEP+=' · 7 get '+(sn.exists?'ok':'none'); if(!S.ready && sn.exists){ S.config=sn.data(); S.ready=true; clearTimeout(slowT); invalidate(); } scheduleRender(); }).catch(e=>{ window.LOADSTEP+=' · 7 get ERR '+((e&&e.code)||''); scheduleRender(); });
   if(role==='guest') return;
+  /* نربط باقي البيانات بعد الإعدادات (أو بعد 4 ثواني) عشان ما تعلّق الصفحة */
+  let attached=false; const attach=()=>{ if(attached || gen!==LISTEN_GEN) return; attached=true; window.LOADSTEP+=' · 8 data'; attachRest(role, onErrFor); };
+  const w=setInterval(()=>{ if(S.ready){ clearInterval(w); attach(); } }, 300); setTimeout(()=>{ clearInterval(w); attach(); }, 4000);
+}
+let LISTEN_GEN=0;
+function attachRest(role, onErrFor){
+  if(role==='vol') volListeners(onErrFor);
   COLS.forEach(c=>{
+    if(role==='vol' && (c==='volunteers'||c==='logs')) return;
     if((c==='secrets'||c==='meals'||c==='payinfo'||c==='payouts'||c==='profiles'||c==='selfies') && role!=='admin') return;
     if(role==='admin' && ROLE()==='hosp' && ['logs','notes','thanks','selfies','profiles','payinfo','payouts','meals','legend','missions','secrets','handover','lost','safety'].includes(c)) return;
     let q=DB.collection(c); if(c==='notes' && role!=='admin') q=q.where('kind','in',['praise','award','box']); if(c==='selfies') q=q.where('day','==',dayKey());
@@ -4009,7 +4020,7 @@ function volListeners(onErrFor){
   const merge=()=>{ S.volunteers={...VZ.zone, ...VZ.me}; invalidate(); scheduleRender(); };
   const code=String(AUTH.volCode||'').trim(); const codes=[code]; if(/^\d+$/.test(code)) codes.push(+code);
   UNSUBS.push(DB.collection('volunteers').where('code','in',codes).onSnapshot(snap=>{
-    const o={}; snap.docs.forEach(d=>{ o[d.id]=d.data(); }); VZ.me=o; const me=snap.docs[0]; 
+    const o={}; snap.docs.forEach(d=>{ o[d.id]=d.data(); }); VZ.me=o; const me=snap.docs[0]; VOL_RETRY=0; 
     if(me){ const id=me.id, z=me.data().zone||'';
       if(!PAY_SUB){ PAY_SUB=true;
         ['payinfo','payouts','profiles'].forEach(pc=>UNSUBS.push(DB.collection(pc).where('v','==',id).onSnapshot(sn=>{ const oo={}; sn.docs.forEach(d=>{ oo[d.id]=d.data(); }); S[pc]=oo; if(pc==='profiles') PROF_LOADED=true; invalidate(); scheduleRender(); }, e=>{ if(pc==='profiles') PROF_LOADED=true; onErrFor(pc)(e); })));
