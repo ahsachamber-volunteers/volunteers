@@ -1621,7 +1621,11 @@ function leadersCard(){
   if(!rows.length) return '';
   return `<section class="card"><div class="card-h"><h2>👑 قادة اليوم</h2><span class="tiny muted">اختيار تلقائي بالتناوب حسب النقاط</span></div><div class="lead-row">${rows.map(x=>`<button class="lead-chip" data-act="open-vol" data-id="${L.byZone[x.z.id]}" style="--zc:${esc(x.z.color)}">${avatar(L.byZone[x.z.id],'av')}<div><b>${esc(x.v.name)}</b><span class="tiny muted">${esc(x.z.name)}</span></div></button>`).join('')}</div></section>`;
 }
-function leaderBanner(vid){ const L=cfg().leaders||{}; if(L.day!==dayKey()) return ''; const z=Object.entries(L.byZone||{}).find(([,id])=>id===vid); if(!z) return ''; return `<div class="lead-banner">👑 <b>أنت قائد ${esc(zName(z[0]))} اليوم!</b><span>تستاهلها بالتزامك، فريقك يعتمد عليك 💪</span></div>`; }
+function leaderBanner(vid){ const L=cfg().leaders||{}; if(L.day!==dayKey()) return ''; const z=Object.entries(L.byZone||{}).find(([,id])=>id===vid); if(!z) return ''; const team=allVols().filter(v=>v.zone===z[0] && v.id!==vid).sort((a,b)=>a.name.localeCompare(b.name,'ar'));
+  const st=v=>{ if(v.status==='break') return ['استراحة','warn']; if(onMini(v)) return ['استراحة قصيرة','warn']; const ps=v.prayer; if(v.status==='active' && ps && ps.day===dayKey() && ps.out && !ps.back) return ['في الصلاة','ok']; if(v.status==='active') return ['في الزون','ok']; if(v.status==='out') return ['انصرف','idle']; return ['ما حضر','idle']; };
+  const here=team.filter(v=>v.status==='active').length;
+  return `<div class="lead-banner">👑 <b>أنت قائد ${esc(zName(z[0]))} اليوم!</b><span>تستاهلها بالتزامك، فريقك يعتمد عليك 💪</span></div>
+  ${team.length?`<section class="card"><div class="card-h"><h3>👥 فريقك اليوم</h3><span class="tiny muted num">حاضر ${here} من ${team.length}</span></div><div class="list">${team.map(v=>{ const [t,c]=st(v); return `<div class="li" style="padding:8px 12px">${avatar(v.id)}<div class="grow"><div class="t small">${esc(v.name)}</div></div><span class="pill ${c} nodot tiny">${t}</span></div>`; }).join('')}</div></section>`:''}`; }
 /* ---------- المشرفات والصلاحيات ---------- */
 const STAFF_DEFAULT = {
   'shahadu057@gmail.com':{name:'شهد', role:'attend'},
