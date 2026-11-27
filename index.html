@@ -947,7 +947,8 @@ function fmtClock(ms){ const neg=ms<0; ms=Math.abs(ms); const m=Math.floor(ms/60
 const fmtTime = ts => ts ? new Date(ts).toLocaleTimeString('ar-u-nu-latn',{hour:'numeric',minute:'2-digit'}) : '—';
 const fmtDay = ts => new Date(ts).toLocaleDateString('ar-u-nu-latn',{weekday:'short',day:'numeric',month:'short'});
 function ago(ts){ const m=Math.floor((now()-ts)/60000); if(m<1) return 'الآن'; if(m<60) return `قبل ${m}د`; const h=Math.floor(m/60); if(h<24) return `قبل ${h}س`; return fmtDay(ts); }
-const initials = n => String(n||'؟').trim().split(/\s+/).slice(0,2).map(w=>w[0]).join('');
+/* حرف واحد بس من الاسم الأول، عشان ما تطلع حروف محرجة لما تنضم لبعض */
+const initials = n => (String(n||'؟').trim().split(/\s+/)[0]||'؟')[0];
 const APP_URL='https://ahsachamber-volunteers.github.io/volunteers/';
 const appUrl=()=>/^https?:/.test(location.protocol)&&!/localhost|127\.0/.test(location.host)?location.origin+location.pathname:APP_URL;
 function waPhone(phone){ let p=String(phone||'').replace(/\D/g,''); if(p.startsWith('05')) p='966'+p.slice(1); else if(p.startsWith('5') && p.length===9) p='966'+p; return p; }
@@ -1985,7 +1986,7 @@ const micBtn = target => DICT ? `<button type="button" class="btn sm" data-act="
 /* ---------- الساعة الذهبية ---------- */
 const goldNow = () => (cfg().goldens||[]).find(g=>now()>=g.start && now()<g.end);
 function goldBanner(zone){ const g=goldNow(); if(!g) return ''; if(zone!==undefined && g.zone && g.zone!==zone) return '';
-  return `<div class="gold-banner" role="status">${ic('bolt')} <b>الساعة الذهبية</b><span>النقاط مضاعفة ×2 ${g.zone?'في '+esc(zName(g.zone)):'للجميع'}</span><span>· باقي <b class="num" data-countdown="${g.end}">${fmtClock(g.end-now())}</b></span></div>`; }
+  return `<div class="gold-banner" role="status">${ic('bolt')} <b>بدأت الساعة الذهبية${g.zone?' في '+esc(zName(g.zone)):''}!</b><span>أي نقطة تكسبها الحين تنحسب لك <b>ضعفين</b>: ساعات عملك، رجوعك في الوقت، ودعمك لزملائك 💪</span><span>تنتهي بعد <b class="num" data-countdown="${g.end}">${fmtClock(g.end-now())}</b></span></div>`; }
 
 /* ---------- الرفيق ---------- */
 function setBuddy(a, b){
