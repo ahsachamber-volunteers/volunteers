@@ -2545,6 +2545,29 @@ function adminView(){
   </div>${UI.sel.size && tab==='zones' ? actionBar() : ''}`;
 }
 
+/* تصحيح الانصراف المتأخر: انصراف انسجل اليوم لحضور من يوم سابق */
+function lateOuts(){
+  const res=[];
+  for(const L of Object.values(idx().byV)){
+    let open=null;
+    for(const l of L){
+      if(l.type==='in'){ open={at:l.at}; continue; }
+      if(!['break_start','break_end','out'].includes(l.type) || !open) continue;
+      let at=l.at;
+      if(dayStart(at)!==dayStart(open.at)){ const d=new Date(open.at); d.setHours(23,0,0,0); let T=d.getTime(); if(T<=open.at) T=open.at+60000; res.push({l, T}); at=T; }
+      open = l.type==='out' ? null : {at};
+    }
+  }
+  return res;
+}
+function fixLateOuts(){
+  const list=lateOuts(); let n=0; const touched={};
+  for(const {l,T} of list){ const {id,...data}=l; put('logs', id, {...data, at:T, fixed:true}); n++; if(l.type==='out') touched[l.v]=T; }
+  for(const [vid,T] of Object.entries(touched)){ const v=S.volunteers[vid]; if(v && v.status==='out') put('volunteers', vid, {...v, outAt:T}); }
+  invalidate(); return n;
+}
+function lateOutCard(){ if(!isFull()) return ''; const n=lateOuts().filter(x=>x.l.type==='out').length; if(!n) return '';
+  return `<section class="card" style="border-color:var(--warn)"><div class="card-h"><h2>⏱️ انصراف متأخر من أمس</h2><button class="btn sm primary" data-act="fix-late-out">تصحيح الساعات (${n})</button></div><div class="card-b small muted">فيه ${n} انصراف انسجل اليوم لمتطوعين حضروا أمس، فانحسبت لهم ساعات الليل. التصحيح يخلي انصرافهم الساعة 11 مساء يوم حضورهم.</div></section>`; }
 /* ---------- اللوحة ---------- */
 function dashView(){
   const all=vols(); const cnt=s=>all.filter(v=>v.status===s).length;
@@ -2573,6 +2596,7 @@ function dashView(){
       </div></div>`; }).join('')}
   </div></section>`:''}
   ${isFull()&&all.some(v=>v.status==='active'||v.status==='break')?`<section class="card"><div class="card-h"><h2>🌙 نهاية اليوم</h2><button class="btn sm primary" data-act="all-out">انصراف الكل (${all.filter(v=>v.status==='active'||v.status==='break').length})</button></div></section>`:''}
+  ${lateOutCard()}
   ${tickerHtml()}
   ${lostCard()}
   ${dalalCard()}
@@ -3671,6 +3695,7 @@ const ACT = {
   ping: el=>{ const id=el.dataset.id; const v=S.volunteers[id]; if(!v) return; if(v.status==='idle'||v.status==='out') return toast('هذا المتطوع مو حاضر الحين','warn'); put('volunteers', id, {...v, ping:{at:now(), by:myStaff()?.name||'المشرف'}}); toast(`وصله "وينك؟" 📲`,'ok'); },
   'ping-reply': el=>{ const vid=getSes()?.id; const v=S.volunteers[vid]; if(!v?.ping) return; put('volunteers', vid, {...v, ping:{...v.ping, reply:el.dataset.r, replyAt:now()}}); toast('وصل ردك للمشرف 👍','ok'); },
   'hosp-done': el=>{ const k=el.dataset.k; const h=hospDay(); const v=['cleanM','cleanF'].includes(k)?[...(h[k]||[]), now()]:now(); put('config','main',{...cfg(), hosp:{...h, day:dayKey(), [k]:v}}); toast('تم ✓','ok'); },
+  'fix-late-out': ()=>{ const n=fixLateOuts(); toast(`تم تصحيح ${n} سجل ✅`,'ok'); scheduleRender(); },
   'all-out': ()=>openModal(`<div class="modal-h"><h2>🌙 انصراف الكل</h2><button class="btn ghost sm" data-act="close-modal" aria-label="إغلاق">${ic('x')}</button></div><form data-form="allout"><div class="modal-b stack"><p class="small" style="margin:0">يسجّل انصراف كل الحاضرين والي في استراحة، بالوقت اللي تحددينه (عشان ما تنحسب ساعات زيادة).</p><label class="small muted" for="ao-t">وقت الانصراف</label><input class="input num" id="ao-t" name="t" type="time" value="23:00" required></div><div class="modal-f"><button class="btn primary">تسجيل الانصراف</button></div></form>`),
   'sup-new': ()=>openModal(`<div class="modal-h"><h2>📝 ناقص شي</h2><button class="btn ghost sm" data-act="close-modal" aria-label="إغلاق">${ic('x')}</button></div><form data-form="sup"><div class="modal-b"><input class="input" name="text" required placeholder="مثال: موية، أكواب، مناديل في غرفة المتطوعات" maxlength="120"></div><div class="modal-f"><button class="btn primary">إضافة</button></div></form>`),
   'ftask-new': ()=>openModal(`<div class="modal-h"><h2>📋 مهمة لفاطمة</h2><button class="btn ghost sm" data-act="close-modal" aria-label="إغلاق">${ic('x')}</button></div><form data-form="ftask"><div class="modal-b"><label class="small muted">وش المطلوب من فاطمة؟</label><textarea class="input" name="text" required maxlength="200" placeholder="مثال: وزّعي الموية على زون الأخضر" style="min-height:80px"></textarea></div><div class="modal-f"><button class="btn primary">إرسال المهمة</button></div></form>`),
