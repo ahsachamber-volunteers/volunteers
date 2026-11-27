@@ -1016,22 +1016,25 @@ const zColor = id => zoneById(id)?.color || 'var(--idle)';
 const zName = id => zoneById(id)?.name || 'غير موزّع';
 const allVols = () => Object.entries(S.volunteers).map(([id,v])=>({...v,id}));
 const vols = () => { const m=typeof myZoneSet==='function'?myZoneSet():null; const a=allVols(); return m? a.filter(v=>m.has(v.zone)) : a; };
+/* نافذة العمل: الساعات تنحسب بس داخل وقت الفعالية (افتراضياً 3 العصر لين 11:30 الليل، ومن يوم 26 نوفمبر) */
+function winCfg(){ const w=cfg().workWin||{}; const p=x=>{ const [h,m]=String(x).split(':').map(Number); return ((h||0)*60+(m||0))*60000; }; return {a:p(w.from||'15:00'), b:p(w.to||'23:30'), from:new Date((w.date||'2026-11-26')+'T00:00:00').getTime()}; }
+function inWin(a,b){ if(!(b>a)) return 0; const W=winCfg(); let t=0; for(let d=dayStart(a); d<b; d=dayStart(d+36*3600000)){ if(d+86400000<=W.from) continue; const s0=Math.max(a,d+W.a, W.from), e0=Math.min(b,d+W.b); if(e0>s0) t+=e0-s0; } return t; }
 function workedSince(vid, since, until=Infinity){
   const L = idx().byV[vid] || []; let total=0, start=null;
   for(const l of L){
     if(l.type==='in' || l.type==='break_end') start=l.at;
-    else if((l.type==='break_start' || l.type==='out') && start!=null){ total += Math.max(0, Math.min(l.at,until)-Math.max(start,since)); start=null; }
+    else if((l.type==='break_start' || l.type==='out') && start!=null){ total += inWin(Math.max(start,since), Math.min(l.at,until)); start=null; }
   }
-  if(start!=null && S.volunteers[vid]?.status==='active') total += Math.max(0, Math.min(now(),until)-Math.max(start,since));
+  if(start!=null && S.volunteers[vid]?.status==='active') total += inWin(Math.max(start,since), Math.min(now(),until));
   return total;
 }
 function workedMs(vid){
   const L = idx().byV[vid] || []; let total=0, start=null;
   for(const l of L){
     if(l.type==='in' || l.type==='break_end') start=l.at;
-    else if((l.type==='break_start' || l.type==='out') && start!=null){ total += l.at-start; start=null; }
+    else if((l.type==='break_start' || l.type==='out') && start!=null){ total += inWin(start, l.at); start=null; }
   }
-  if(start!=null && S.volunteers[vid]?.status==='active') total += now()-start;
+  if(start!=null && S.volunteers[vid]?.status==='active') total += inWin(start, now());
   return total;
 }
 function breakStats(vid){
