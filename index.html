@@ -936,7 +936,7 @@ const $ = (s, el=document) => el.querySelector(s);
 const $$ = (s, el=document) => [...el.querySelectorAll(s)];
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const uid = (p='') => p + Date.now().toString(36) + Math.random().toString(36).slice(2,7);
-const now = () => Date.now();
+const now = () => (window.NOW_OV || Date.now());
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 function hash(str){ let h1=0xdeadbeef, h2=0x41c6ce57; for(let i=0;i<str.length;i++){const c=str.charCodeAt(i);h1=Math.imul(h1^c,2654435761);h2=Math.imul(h2^c,1597334677);} h1=Math.imul(h1^(h1>>>16),2246822507)^Math.imul(h2^(h2>>>13),3266489909); h2=Math.imul(h2^(h2>>>16),2246822507)^Math.imul(h1^(h1>>>13),3266489909); return (4294967296*(2097151&h2)+(h1>>>0)).toString(36); }
 const pinHash = (pin, code) => hash((S.config?.salt||'') + ':' + code + ':' + pin);
@@ -2572,6 +2572,7 @@ function dashView(){
         <button class="btn sm" data-act="alert-resolve" data-id="${id}">${ic('check')} تم</button>
       </div></div>`; }).join('')}
   </div></section>`:''}
+  ${isFull()&&all.some(v=>v.status==='active'||v.status==='break')?`<section class="card"><div class="card-h"><h2>🌙 نهاية اليوم</h2><button class="btn sm primary" data-act="all-out">انصراف الكل (${all.filter(v=>v.status==='active'||v.status==='break').length})</button></div></section>`:''}
   ${tickerHtml()}
   ${lostCard()}
   ${dalalCard()}
@@ -3670,6 +3671,7 @@ const ACT = {
   ping: el=>{ const id=el.dataset.id; const v=S.volunteers[id]; if(!v) return; if(v.status==='idle'||v.status==='out') return toast('هذا المتطوع مو حاضر الحين','warn'); put('volunteers', id, {...v, ping:{at:now(), by:myStaff()?.name||'المشرف'}}); toast(`وصله "وينك؟" 📲`,'ok'); },
   'ping-reply': el=>{ const vid=getSes()?.id; const v=S.volunteers[vid]; if(!v?.ping) return; put('volunteers', vid, {...v, ping:{...v.ping, reply:el.dataset.r, replyAt:now()}}); toast('وصل ردك للمشرف 👍','ok'); },
   'hosp-done': el=>{ const k=el.dataset.k; const h=hospDay(); const v=['cleanM','cleanF'].includes(k)?[...(h[k]||[]), now()]:now(); put('config','main',{...cfg(), hosp:{...h, day:dayKey(), [k]:v}}); toast('تم ✓','ok'); },
+  'all-out': ()=>openModal(`<div class="modal-h"><h2>🌙 انصراف الكل</h2><button class="btn ghost sm" data-act="close-modal" aria-label="إغلاق">${ic('x')}</button></div><form data-form="allout"><div class="modal-b stack"><p class="small" style="margin:0">يسجّل انصراف كل الحاضرين والي في استراحة، بالوقت اللي تحددينه (عشان ما تنحسب ساعات زيادة).</p><label class="small muted" for="ao-t">وقت الانصراف</label><input class="input num" id="ao-t" name="t" type="time" value="23:00" required></div><div class="modal-f"><button class="btn primary">تسجيل الانصراف</button></div></form>`),
   'sup-new': ()=>openModal(`<div class="modal-h"><h2>📝 ناقص شي</h2><button class="btn ghost sm" data-act="close-modal" aria-label="إغلاق">${ic('x')}</button></div><form data-form="sup"><div class="modal-b"><input class="input" name="text" required placeholder="مثال: موية، أكواب، مناديل في غرفة المتطوعات" maxlength="120"></div><div class="modal-f"><button class="btn primary">إضافة</button></div></form>`),
   'ftask-new': ()=>openModal(`<div class="modal-h"><h2>📋 مهمة لفاطمة</h2><button class="btn ghost sm" data-act="close-modal" aria-label="إغلاق">${ic('x')}</button></div><form data-form="ftask"><div class="modal-b"><label class="small muted">وش المطلوب من فاطمة؟</label><textarea class="input" name="text" required maxlength="200" placeholder="مثال: وزّعي الموية على زون الأخضر" style="min-height:80px"></textarea></div><div class="modal-f"><button class="btn primary">إرسال المهمة</button></div></form>`),
   'ftask-del': el=>{ del('alerts', el.dataset.id); },
@@ -3817,6 +3819,10 @@ const FORMS = {
     else { const pin=(fd.get('pin')||'').trim(); if(pin && !/^\d{6}$/.test(pin)) return toast('الرمز لازم 6 أرقام','warn'); const r=createVolunteer({name,phone:fd.get('phone'),role:fd.get('role'),zone:fd.get('zone'),pin:pin||null,shiftStart:fd.get('shiftStart')||'',shiftEnd:fd.get('shiftEnd')||'',reserve:!!fd.get('reserve')}); credsModal([r]); }
   },
   roll: f=>{ const vid=getSes()?.id; const zid=f.dataset.z; const team=allVols().filter(v=>v.zone===zid && v.id!==vid && (v.status==='active'||v.status==='break')); const present=new Set([...new FormData(f).getAll('p'), ...team.filter(v=>v.status==='break'||onMini(v)).map(v=>v.id)]); const absent=team.filter(v=>!present.has(v.id)).map(v=>v.id); addLog(vid,'roll',{zone:zid, present:[...present], absent}); toast(absent.length?`وصل للمشرفة: ${absent.length} غايب`:'شكراً، الفريق كامل 👏','ok'); },
+  allout: f=>{ const hm=String(new FormData(f).get('t')||'23:00'); const [h,m]=hm.split(':').map(Number); const d=new Date(); d.setHours(h||0,m||0,0,0); let T=d.getTime(); if(T>Date.now()) T-=86400000;
+    const list=allVols().filter(v=>v.status==='active'||v.status==='break'); let n=0;
+    try{ window.NOW_OV=T; for(const v of list){ const cur=S.volunteers[v.id]; const t0=v.status==='break'?(cur.breakAt||0):(cur.checkInAt||cur.activeSince||0); if(t0 && T<t0){ window.NOW_OV=Date.now(); } setStatus(v.id,'out','admin'); window.NOW_OV=T; n++; } } finally { window.NOW_OV=0; }
+    closeModal(); toast(`تم تسجيل انصراف ${n} متطوع الساعة ${hm}`,'ok'); },
   ftask: f=>{ const t=String(new FormData(f).get('text')||'').trim(); if(!t) return; put('alerts', uid('a'), {type:'ftask', text:t, zone:'', by:'', byName:myStaff()?.name||(String(AUTH.user?.email||'').toLowerCase()===DALAL.email?'دلال':'المشرفة'), at:now(), resolved:false}); closeModal(); toast('وصلت المهمة لفاطمة 📋','ok'); },
   sup: f=>{ const t=String(new FormData(f).get('text')||'').trim(); if(!t) return; put('alerts', uid('a'), {type:'supply', text:t, zone:'', by:'', byName:myStaff()?.name||'الضيافة', at:now(), resolved:false}); closeModal(); toast('انضاف للنواقص','ok'); },
   dalal: f=>{ const t=String(new FormData(f).get('text')||'').trim(); if(!t) return; put('alerts', uid('a'), {type:'dalal', text:t, zone:'', by:'', byName:myStaff()?.name||'الضيافة', at:now(), resolved:false});
