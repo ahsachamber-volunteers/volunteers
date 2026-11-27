@@ -1594,6 +1594,19 @@ function pickLeader(z, members){
   const top=scored.filter(x=>x.p===max);
   return top[Math.floor(Math.random()*top.length)].v;
 }
+/* انصراف تلقائي: اللي نسي ينصرف من يوم سابق، ينسجل انصرافه 11 مساء يوم حضوره */
+let AUTO_OUT_AT=0;
+function autoCloseOld(){
+  if(!isFull() || now()-AUTO_OUT_AT<60000) return; AUTO_OUT_AT=now();
+  const today=dayStart(); let n=0;
+  for(const v of allVols()){
+    if(v.status!=='active' && v.status!=='break') continue;
+    const t0=v.checkInAt||v.activeSince||v.breakAt||v.statusAt||0; if(!t0 || dayStart(t0)>=today) continue;
+    const d=new Date(t0); d.setHours(23,0,0,0); let T=d.getTime(); const last=Math.max(v.activeSince||0, v.breakAt||0, t0); if(T<=last) T=last+60000;
+    try{ window.NOW_OV=T; setStatus(v.id,'out','auto'); n++; } finally { window.NOW_OV=0; }
+  }
+  if(n) toast(`🌙 سجّلت المنصة انصراف ${n} متطوع نسوا ينصرفون أمس`,'ok');
+}
 async function ensureLeaders(){
   if(!leadOn() || LEAD_BUSY || !isFull() || now()-LEAD_AT<20000) return;
   const today=dayKey(); const L=cfg().leaders||{}; const by=L.day===today?{...(L.byZone||{})}:{};
@@ -2526,7 +2539,7 @@ function adminView(){
     </aside>
     <div class="main">
       <header class="top">
-        <div><h1>${esc(c.eventName)}</h1><div class="sub">${S.mode==='db'?'<span class="live">مباشر</span>':'<span>وضع تجريبي</span>'}<span>${c.eventDate?esc(fmtDay(new Date(c.eventDate).getTime())):''}</span><span class="num">${fmtTime(now())}</span></div></div>
+        <div><h1>${esc(c.eventName)}</h1><div class="sub">${S.mode==='db'?'<span class="live">مباشر</span>':'<span>وضع تجريبي</span>'}<span>${esc(fmtDay(now()))}</span><span class="num">${fmtTime(now())}</span></div></div>
         <div class="row">
           ${SAMPLE?`<button class="btn sm primary" data-act="ai-open">${ic('spark')} المساعد الذكي</button>`:''}
           ${R==='full'||R==='zones'?`<button class="btn sm" data-act="tab" data-tab="ops-wall">${ic('tv')} شاشة العمليات</button>`:''}
@@ -2603,7 +2616,7 @@ function dashView(){
       </div></div>`; }).join('')}
   </div></section>`:''}
   ${isFull()&&all.some(v=>v.status==='active'||v.status==='break')?`<section class="card"><div class="card-h"><h2>🌙 نهاية اليوم</h2><button class="btn sm primary" data-act="all-out">انصراف الكل (${all.filter(v=>v.status==='active'||v.status==='break').length})</button></div></section>`:''}
-  ${lateOutCard()}
+  ${(setTimeout(autoCloseOld,0),'')}${lateOutCard()}
   ${tickerHtml()}
   ${lostCard()}
   ${dalalCard()}
