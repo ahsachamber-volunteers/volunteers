@@ -1606,6 +1606,11 @@ function autoCloseOld(){
     try{ window.NOW_OV=T; setStatus(v.id,'out','auto'); n++; } finally { window.NOW_OV=0; }
   }
   if(n) toast(`🌙 سجّلت المنصة انصراف ${n} متطوع نسوا ينصرفون أمس`,'ok');
+  /* يوم جديد: اللي انصرفوا أيام سابقة يرجعون "لم يحضر" (الساعات محفوظة في السجل) */
+  let r=0;
+  for(const v of allVols()){ if(v.status!=='out') continue; const t=v.outAt||v.statusAt||0; if(t && dayStart(t)>=today) continue;
+    const cur=S.volunteers[v.id]; if(!cur) continue; const {breakAt,checkInAt,outAt,activeSince,...rest}=cur; put('volunteers', v.id, {...rest, status:'idle', statusAt:now()}); r++; }
+  if(r) toast(`☀️ يوم جديد: ${r} متطوع جاهزين لتسجيل الحضور`,'ok');
 }
 async function ensureLeaders(){
   if(!leadOn() || LEAD_BUSY || !isFull() || now()-LEAD_AT<20000) return;
