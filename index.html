@@ -1066,7 +1066,7 @@ function gamiCalc(vid){
   add('finder','العثور على مفقودين', foundL.length*PTS.finder);
   const prayOk=L.filter(l=>l.type==='prayer_in' && !l.late).length; add('prayer','الرجوع من الصلاة في الوقت', prayOk*PTS.ontime);
   const thx=thanksOf(vid); const perDay={}; let thxCount=0; thx.forEach(t=>{ const d=dayStart(t.at); perDay[d]=(perDay[d]||0)+1; if(perDay[d]<=5) thxCount++; });
-  add('visitor','شكر الزوار', thxCount*PTS.visitor);
+  /* شكر الزوار بدون نقاط (منعاً للتلاعب) */
   const myM=Object.values(S.missions).filter(m=>m.status==='done' && (m.takers||[]).includes(vid));
   add('mission','مهام فورية منجزة', myM.reduce((t,m)=>t+(m.pts||0),0));
   let gb=0;
@@ -1348,7 +1348,7 @@ function thanksPortal(vid){
   return `<section class="card ${fresh>0?'thx-new':''}"><div class="card-h"><h3>💚 شكر الزوار</h3><span class="pill ok nodot num">${t.length}</span></div><div class="card-b stack" style="gap:10px">
     ${fresh>0?`<div class="banner ok" style="margin:0">🎉 <b>وصلك ${fresh===1?'شكر جديد':fresh+' شكر جديد'} من زائر!</b><button class="btn sm" data-act="thx-seen" data-id="${vid}">شفته 💚</button></div>`:''}
     ${t.length?`${avg?`<div class="small">متوسط تقييم الزوار لك: <b class="num" style="color:#d97706">${avg.toFixed(1)} ★</b></div>`:''}${t.slice(0,3).map(x=>`<div class="thx-item">${x.stars?`<span class="num" style="color:#d97706">${'★'.repeat(x.stars)}</span> `:''}${x.msg?esc(x.msg):'شكراً لك'}<span class="tiny muted"> · ${ago(x.at)}</span></div>`).join('')}`
-      :`<p class="small muted" style="margin:0">ورّ الزائر اللي تساعده <b>بطاقتك</b>، يصوّر الـQR ويرسل لك شكر. كل شكر <b>+${PTS.visitor} نقاط</b> 🌟</p>`}
+      :`<p class="small muted" style="margin:0">ورّ الزائر اللي تساعده <b>بطاقتك</b>، يصوّر الـQR ويرسل لك شكر 🌟</p>`}
     <button class="btn sm" data-act="id-card" data-id="${vid}">${ic('qr')} اعرض بطاقتي للزائر</button>
   </div></section>`;
 }
@@ -3117,7 +3117,7 @@ function portalGami(vid){
         <li>السلسلة: كل حضور أو عودة من استراحة في الوقت تكبّر شعلتك. من 3 التزامات متتالية +3 لكل التزام، ومن 6 +5. أي تأخير يطفيها</li>
         <li>الساعة الذهبية: كل النقاط مضاعفة ×2 وقت تفعيلها</li><li>كل ${BOX_EVERY} نقطة تفتح لك صندوق مفاجآت</li>
         <li>الحضور كل يوم: +${PTS.checkin}</li><li>كل ساعة عمل: +${PTS.hour}</li><li>الرجوع من الاستراحة ضمن رصيدك: +${PTS.ontime}</li>
-        <li>الانتقال لدعم زون مزدحم: +${PTS.crowd}</li><li>إشادة من المشرف: +${PTS.praise}، وكل نجمة تقييم: +${PTS.star}</li><li>بلاغ مفيد عن زحمة أو حالة: +${PTS.report}</li><li>مكافآت خاصة من المشرف على المبادرات</li>
+        <li>الانتقال لدعم زون مزدحم: +${PTS.crowd}</li><li>إشادة من المشرف: +${PTS.praise}، وكل نجمة تقييم: +${PTS.star}</li><li>بلاغ مفيد عن زحمة أو حالة: +${PTS.report}</li><li>الرجوع من الصلاة في الوقت: +${PTS.ontime}</li><li>إنجاز مهمة فورية: نقاط المهمة</li><li>العثور على مفقود: +${PTS.finder}</li><li>مكافآت خاصة من المشرف على المبادرات</li><li>شكر الزوار يوصلك ويفرحك، بس بدون نقاط</li>
       </ul></details>
     ${g.br.length?`<details><summary class="small" style="cursor:pointer;font-weight:600">تفاصيل نقاطي</summary><div class="small" style="display:grid;gap:3px;margin-top:8px">${g.br.map(b=>`<div class="row" style="justify-content:space-between"><span>${esc(b.t)}</span><b class="num">+${Math.round(b.n)}</b></div>`).join('')}</div></details>`:''}
   </div></section>
@@ -3488,7 +3488,7 @@ function honorsView(){
   <section class="card"><div class="card-h"><h2>نظام النقاط والملصقات</h2></div><div class="card-b stack" style="gap:14px">
     <div class="grid2 small">
       <div>الحضور (مرة يومياً) <b class="num">+${PTS.checkin}</b></div><div>كل ساعة عمل <b class="num">+${PTS.hour}</b></div><div>عودة من الاستراحة ضمن الرصيد <b class="num">+${PTS.ontime}</b></div>
-      <div>انتقال لدعم زون مزدحم <b class="num">+${PTS.crowd}</b></div><div>السلسلة: من 3 التزامات <b class="num">+3</b> ومن 6 <b class="num">+5</b> لكل التزام</div><div>الساعة الذهبية: كل النقاط <b>×2</b></div><div>كل ${BOX_EVERY} نقطة = صندوق مفاجآت</div><div>إشادة <b class="num">+${PTS.praise}</b> وكل نجمة <b class="num">+${PTS.star}</b></div><div>بلاغ مفيد (بعد ما تضغط "تم") <b class="num">+${PTS.report}</b></div><div>شكر من زائر (حتى 5 باليوم) <b class="num">+${PTS.visitor}</b></div>
+      <div>انتقال لدعم زون مزدحم <b class="num">+${PTS.crowd}</b></div><div>رجوع من الصلاة في الوقت <b class="num">+${PTS.ontime}</b></div><div>إشادة من المشرف <b class="num">+${PTS.praise}</b></div><div>كل نجمة تقييم من المشرف <b class="num">+${PTS.star}</b></div><div>بلاغ مفيد <b class="num">+${PTS.report}</b></div><div>العثور على مفقود <b class="num">+${PTS.finder}</b></div><div>مهمة فورية <b class="num">نقاطها</b></div><div>شكر الزوار <b class="num">بدون نقاط</b></div><div>السلسلة: من 3 التزامات <b class="num">+3</b> ومن 6 <b class="num">+5</b> لكل التزام</div><div>الساعة الذهبية: كل النقاط <b>×2</b></div><div>كل ${BOX_EVERY} نقطة = صندوق مفاجآت</div><div>إشادة <b class="num">+${PTS.praise}</b> وكل نجمة <b class="num">+${PTS.star}</b></div><div>بلاغ مفيد (بعد ما تضغط "تم") <b class="num">+${PTS.report}</b></div>
     </div>
     <div class="small muted">المستويات: ${LEVELS.map(l=>`${l.t} من ${l.min}`).join(' · ')}</div>
     <div class="stks">${BADGES.map(b=>sticker(b)).join('')}</div>
