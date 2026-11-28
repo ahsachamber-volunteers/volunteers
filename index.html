@@ -1784,7 +1784,7 @@ function prayerPlan(p){
   /* لو الجدول انثبت (قبل الصلاة بنص ساعة) نستخدمه عشان ما يتغير على المتطوعين */
   const fz=(cfg().prayPlan||{})[dayKey()+'_'+p.k];
   if(fz){ const out={}; const seen=new Set(); const V=id=>{ const v=S.volunteers[id]; return v?{...v,id}:null; };
-    for(const [zid,g] of Object.entries(fz)){ const f=(g.f||[]).map(V).filter(x=>x && x.zone===zid), sc=(g.s||[]).map(V).filter(x=>x && x.zone===zid); f.concat(sc).forEach(x=>seen.add(x.id)); out[zid]={first:f, second:sc}; }
+    for(const [zid,g] of Object.entries(fz)){ const f=(g.f||[]).map(V).filter(x=>x && x.zone===zid), sc=(g.s||[]).map(V).filter(x=>x && x.zone===zid); f.concat(sc).forEach(x=>seen.add(x.id)); out[zid]={first:f, second:sc, m:g.m||{}}; }
     for(const z of allZones()){ if(attendOnly(z)) continue; const extra=allVols().filter(v=>v.zone===z.id && !seen.has(v.id) && (v.status==='active'||v.status==='break')); if(extra.length){ out[z.id]=out[z.id]||{first:[],second:[]}; out[z.id].second=out[z.id].second.concat(extra); } }
     return out; }
   return prayerPlanLive(p);
@@ -1801,9 +1801,15 @@ function prayerPlanLive(p){
     out[z.id]={first, second}; }
   return out;
 }
+/* مين يغطي مين: التعديل اليدوي أول، والباقي يتوزع بدون تكرار */
+function prayPairs(pl){ const M=pl.m||{}; const sec=pl.second.map(x=>x.id); const used=new Set(); const P={};
+  pl.first.forEach(x=>{ const t=M[x.id]; if(t && sec.includes(t)){ P[x.id]=t; used.add(t); } });
+  let k=0; pl.first.forEach(x=>{ if(P[x.id]) return; const free=sec.filter(id=>!used.has(id)); const t=free.length?free[0]:(sec.length?sec[(k++)%sec.length]:null); if(t){ P[x.id]=t; used.add(t); } });
+  return P; }
 function myPrayerRole(vid, p){ const v=S.volunteers[vid]; if(!v) return null; const pl=prayerPlan(p)[v.zone]; if(!pl) return null;
-  let i=pl.first.findIndex(x=>x.id===vid); if(i>=0) return {g:1, mate:pl.second.length?pl.second[i%pl.second.length]:null};
-  i=pl.second.findIndex(x=>x.id===vid); if(i>=0) return {g:2, mate:pl.first.length?pl.first[i%pl.first.length]:null};
+  const P=prayPairs(pl); const byId=id=>pl.first.concat(pl.second).find(x=>x.id===id)||null;
+  let i=pl.first.findIndex(x=>x.id===vid); if(i>=0) return {g:1, mate:byId(P[vid])};
+  i=pl.second.findIndex(x=>x.id===vid); if(i>=0){ const f=Object.entries(P).find(([,b])=>b===vid); return {g:2, mate:(f&&byId(f[0])) || (pl.first.length?pl.first[i%pl.first.length]:null)}; }
   return null; }
 const prayState = (v,p) => (v?.prayer && v.prayer.p===p.k && v.prayer.day===dayKey()) ? v.prayer : null;
 function canPray(vid, p){ const r=myPrayerRole(vid,p); if(!r) return {ok:false}; if(r.g===1) return {ok:now()>=p.T-2*60000, r};
@@ -1823,10 +1829,19 @@ function prayerPortal(vid){
   const table=pl?`<details class="pray-tbl" ${before?'open':''}><summary class="small">جدول التناوب في زونك</summary><div class="small"><div>🟢 <b>الفوج الأول</b> (${fmtTime(t1)}–${fmtTime(t2)}): ${pl.first.map(nm).join('، ')||'—'}</div><div>🟡 <b>الفوج الثاني</b> (${fmtTime(t2)}–${fmtTime(t2+p.dur)}): ${pl.second.map(nm).join('، ')||'—'}</div></div></details>`:'';
   return `<section class="pray-card"><div class="row" style="justify-content:space-between"><b>🕌 صلاة ${p.t} · ${fmtTime(p.T)}</b><span class="pill nodot">${r.g===1?'الفوج الأول':'الفوج الثاني'}</span></div>${before?`<div class="tiny" style="opacity:.85">باقي على الأذان <b class="num" data-countdown="${p.T}">${fmtClock(p.T-now())}</b></div>`:''}${body}${table}<p class="tiny" style="margin:0;opacity:.75">المدة ${prayCfg().dur} دقيقة · ما تنخصم من رصيد الاستراحة</p></section>`;
 }
+function prayFreeze(p){ const key=dayKey()+'_'+p.k; const c=cfg(); const cur=(c.prayPlan||{})[key]; if(cur) return {key, fz:JSON.parse(JSON.stringify(cur))};
+  const plan=prayerPlanLive(p); return {key, fz:Object.fromEntries(Object.entries(plan).map(([zid,g])=>[zid,{f:g.first.map(x=>x.id), s:g.second.map(x=>x.id), m:{}}]))}; }
+function praySave(key, fz){ const c=cfg(); put('config','main',{...c, prayPlan:{...Object.fromEntries(Object.entries(c.prayPlan||{}).slice(-4)), [key]:fz}}); }
+function prayEdit(z, pl, p){
+  const nm=x=>esc(firstName(S.volunteers[x.id]?.name||x.name)); const t2=fmtTime(p.T+p.dur);
+  const r1=pl.first.map(x=>{ const mt=myPrayerRole(x.id,p)?.mate; return `<div class="row" style="gap:6px;flex-wrap:nowrap"><span class="grow small">🟢 ${nm(x)} <span class="muted">يغطيه</span></span><select class="input" style="max-width:150px;padding:4px 8px" data-pray-mate="${esc(x.id)}" data-z="${esc(z.id)}" data-p="${p.k}"><option value="">—</option>${pl.second.map(y=>`<option value="${esc(y.id)}" ${mt&&mt.id===y.id?'selected':''}>${nm(y)}</option>`).join('')}</select><button class="btn sm ghost" data-act="pray-move" data-id="${esc(x.id)}" data-z="${esc(z.id)}" data-p="${p.k}" title="انقله للفوج الثاني">⇄</button></div>`; }).join('');
+  const r2=pl.second.map(y=>`<div class="row" style="gap:6px;flex-wrap:nowrap"><span class="grow small">🟡 ${nm(y)} <span class="muted tiny">(بعد ${t2})</span></span><button class="btn sm ghost" data-act="pray-move" data-id="${esc(y.id)}" data-z="${esc(z.id)}" data-p="${p.k}" title="انقله للفوج الأول">⇄</button></div>`).join('');
+  return `<details class="pray-edit" ${UI.prayOpen===z.id?'open':''}><summary class="small" style="cursor:pointer;font-weight:700" data-act="pray-open" data-z="${esc(z.id)}">✏️ تعديل التناوب</summary><div class="stack" style="gap:6px;margin-top:8px">${r1}${r2}<div class="tiny muted">اختاري مين يغطي كل واحد من الفوج الأول، و⇄ ينقل المتطوع بين الفوجين. التعديل يوصل للمتطوعين فوراً.</div></div></details>`;
+}
 function prayerCard(){
   const p=prayerNow(); if(!p) return ''; const plan=prayerPlan(p); const zs=zones().filter(z=>plan[z.id]);
   const rows=zs.map(z=>{ const pl=plan[z.id]; const all=[...pl.first,...pl.second]; const out=all.filter(v=>{ const s=prayState(S.volunteers[v.id],p); return s&&!s.back; }); const late=out.filter(v=>{ const s=prayState(S.volunteers[v.id],p); return now()>s.out+p.dur; }); const back=all.filter(v=>prayState(S.volunteers[v.id],p)?.back).length;
-    return `<div class="li"><span class="zdot" style="--zc:${esc(z.color)}"></span><div class="grow"><div class="t">${esc(z.name)} <span class="muted small num">برا ${out.length} · رجع ${back} من ${all.length}</span></div><div class="s">${out.map(v=>`<span style="${late.includes(v)?'color:var(--crit);font-weight:700':''}">${esc(firstName(v.name))}${late.includes(v)?` ⚠️ ${fmtDur(now()-prayState(S.volunteers[v.id],p).out-p.dur)}`:''}</span>`).join('، ')||'الكل في مكانه'}</div></div></div>`; }).join('');
+    return `<div class="li"><span class="zdot" style="--zc:${esc(z.color)}"></span><div class="grow"><div class="t">${esc(z.name)} <span class="muted small num">برا ${out.length} · رجع ${back} من ${all.length}</span></div><div class="s">${out.map(v=>`<span style="${late.includes(v)?'color:var(--crit);font-weight:700':''}">${esc(firstName(v.name))}${late.includes(v)?` ⚠️ ${fmtDur(now()-prayState(S.volunteers[v.id],p).out-p.dur)}`:''}</span>`).join('، ')||'الكل في مكانه'}</div>${prayEdit(z,pl,p)}</div></div>`; }).join('');
   return rows?`<section class="card"><div class="card-h"><h2>🕌 صلاة ${p.t} · ${fmtTime(p.T)}</h2><span class="tiny muted">تناوب تلقائي · ${p.dur/60000} دقيقة</span></div><div class="list">${rows}</div></section>`:'';
 }
 /* ---------- وينك؟ + تفقّد القائد + المخالفات ---------- */
@@ -1844,15 +1859,15 @@ function pingBanner(v){ const p=pingState(v); if(!p || p.reply) return '';
   if(FX.ping!==p.at){ FX.ping=p.at; setTimeout(()=>{ try{ navigator.vibrate&&navigator.vibrate([300,120,300,120,300]); }catch{} try{ say('المشرف يدورك، وينك؟'); }catch{} },200); }
   return `<section class="ping-card" role="alertdialog"><b>📲 المشرف يدورك، وينك؟</b><div class="ping-btns">${Object.entries(PING_R).map(([k,t])=>`<button class="btn" data-act="ping-reply" data-r="${k}">${t}</button>`).join('')}</div></section>`; }
 /* تفقّد القائد */
-function lastRoll(zid){ return Object.values(S.logs).filter(l=>l.type==='roll' && l.zone===zid).sort((a,b)=>b.at-a.at)[0]; }
+function lastRoll(zid){ return Object.entries(S.logs).filter(([,l])=>l.type==='roll' && l.zone===zid).map(([id,l])=>({...l,id})).sort((a,b)=>b.at-a.at)[0]; }
 function rollDue(vid){ const L=cfg().leaders||{}; if(L.day!==dayKey()) return null; const zid=Object.entries(L.byZone||{}).find(([,id])=>id===vid)?.[0]; if(!zid || zAttendOnly(zid)) return null; const lr=lastRoll(zid); const since=lr?lr.at:Math.max(dayStart(), ...Object.values(S.logs).filter(l=>l.type==='in'&&l.v===vid&&l.at>=dayStart()).map(l=>l.at)); return now()-since>=ROLL_EVERY()?zid:null; }
 function rollPortal(vid){ const zid=rollDue(vid); if(!zid) return ''; const team=allVols().filter(v=>v.zone===zid && v.id!==vid && (v.status==='active'||v.status==='break')).sort((a,b)=>a.name.localeCompare(b.name,'ar'));
   if(!team.length) return '';
-  return `<section class="card roll-card"><div class="card-h"><h3>👑 تفقّد فريقك</h3><span class="tiny muted">علّم على اللي قدامك الحين</span></div><form class="card-b stack" style="gap:8px" data-form="roll" data-z="${esc(zid)}">${team.map(v=>`<label class="row small roll-item"><input type="checkbox" name="p" value="${v.id}" ${v.status==='break'||onMini(v)?'checked disabled':''}> ${esc(v.name)} ${v.status==='break'?'<span class="tiny muted">(استراحة)</span>':''}</label>`).join('')}<button class="btn primary">إرسال التفقّد</button></form></section>`; }
+  return `<section class="card roll-card"><div class="card-h"><h3>👑 تفقّد فريقك</h3><span class="tiny muted">شيل الصح ✓ عن اللي <b>مو موجود</b> الحين، وبعدها اضغط إرسال</span></div><form class="card-b stack" style="gap:8px" data-form="roll" data-z="${esc(zid)}">${team.map(v=>`<label class="row small roll-item"><input type="checkbox" name="p" value="${v.id}" checked ${v.status==='break'||onMini(v)?'disabled':''}> ${esc(v.name)} ${v.status==='break'?'<span class="tiny muted">(استراحة)</span>':''}</label>`).join('')}<button class="btn primary">إرسال التفقّد</button></form></section>`; }
 function rollCard(){
-  const rows=zones().map(z=>({z, r:lastRoll(z.id)})).filter(x=>x.r && x.r.at>=dayStart() && (x.r.absent||[]).length && now()-x.r.at<ROLL_EVERY());
+  const rows=zones().map(z=>({z, r:lastRoll(z.id)})).filter(x=>x.r && !x.r.ignored && x.r.at>=dayStart() && (x.r.absent||[]).length && now()-x.r.at<ROLL_EVERY());
   if(!rows.length) return '';
-  return `<section class="card" style="border-color:var(--warn)"><div class="card-h"><h2>👑 تفقّد القادة: غياب</h2></div><div class="list">${rows.map(({z,r})=>`<div class="li"><span class="zdot" style="--zc:${esc(z.color)}"></span><div class="grow"><div class="t">${esc(z.name)} <span class="tiny muted">${fmtTime(r.at)} · من ${esc(S.volunteers[r.v]?.name||'القائد')}</span></div><div class="s">${(r.absent||[]).map(id=>`<b style="color:var(--crit)">${esc(S.volunteers[id]?.name||'')}</b>`).join('، ')}</div></div>${(r.absent||[]).length===1?`<button class="btn sm" data-act="ping" data-id="${r.absent[0]}">📲 وينك؟</button>`:''}</div>`).join('')}</div></section>`;
+  return `<section class="card" style="border-color:var(--warn)"><div class="card-h"><h2>👑 تفقّد القادة: غياب</h2></div><div class="list">${rows.map(({z,r})=>`<div class="li"><span class="zdot" style="--zc:${esc(z.color)}"></span><div class="grow"><div class="t">${esc(z.name)} <span class="tiny muted">${fmtTime(r.at)} · من ${esc(S.volunteers[r.v]?.name||'القائد')}</span></div><div class="s">${(r.absent||[]).map(id=>`<b style="color:var(--crit)">${esc(S.volunteers[id]?.name||'')}</b>`).join('، ')}</div></div><div class="row" style="gap:6px">${(r.absent||[]).length===1?`<button class="btn sm" data-act="ping" data-id="${r.absent[0]}">📲 وينك؟</button>`:''}<button class="btn sm ghost" data-act="roll-ignore" data-id="${esc(r.id)}" title="التفقد غلط، لا تحسب غياب">تجاهل</button></div></div>`).join('')}</div><div class="card-b tiny muted">القائد كل ساعة يعلّم على فريقه، واللي بالأحمر علّم إنهم مو موجودين. لو التفقد غلط اضغطي "تجاهل" وما تنحسب عليهم مخالفة.</div></section>`;
 }
 /* المخالفات */
 const VIOL_T = {brk:'تأخر من الاستراحة', pray:'تأخر من الصلاة', ping:'ما رد على "وينك؟"', roll:'غياب في التفقّد', warn:'تنبيه من المشرف', lateIn:'تأخر في الحضور'};
@@ -1861,7 +1876,7 @@ function violations(vid){
   c.brk=g.late||0;
   c.pray=L.filter(l=>l.type==='prayer_in' && l.late).length;
   c.ping=L.filter(l=>l.type==='ping_miss').length;
-  c.roll=Object.values(S.logs).filter(l=>l.type==='roll' && (l.absent||[]).includes(vid)).length;
+  c.roll=Object.values(S.logs).filter(l=>l.type==='roll' && !l.ignored && (l.absent||[]).includes(vid)).length;
   c.warn=(idx().notesByV[vid]||[]).filter(n=>n.kind==='warn').length;
   c.lateIn=0; if(v?.shiftStart){ const days=new Set(); L.filter(l=>l.type==='in').forEach(l=>{ const d=dayStart(l.at); if(days.has(d)) return; days.add(d); const [h,m]=String(v.shiftStart).split(':').map(Number); const t=new Date(d); t.setHours(h||0,m||0,0,0); if(l.at>t.getTime()+10*60000) c.lateIn++; }); }
   const total=Object.values(c).reduce((a,b)=>a+b,0); return {c,total};
@@ -3810,6 +3825,11 @@ const ACT = {
   'mini-send': async ()=>{ const m=miniCfg(); const picks=miniPicks(); const t=now(); let n=0;
     for(const p of picks) for(const v of p.vs){ const cur=S.volunteers[v.id]; if(!cur) continue; put('volunteers', v.id, {...cur, mini:{at:t, until:t+(m.min+10)*60000, pend:true, min:m.min}}); addLog(v.id,'mini',{by:'admin', min:m.min}); n++; if(DB) await sleep(30); }
     UI.miniSkip=[]; { const c=cfg(); put('config','main',{...c, miniRounds:{...(c.miniRounds||{}), ...Object.fromEntries(zones().map(z=>[z.id,t]))}}); } toast(`أُرسل ${n} للاستراحة القصيرة ☕`,'ok'); },
+  'pray-open': (el,e)=>{ e&&e.preventDefault(); UI.prayOpen = UI.prayOpen===el.dataset.z ? null : el.dataset.z; scheduleRender(); },
+  'pray-move': el=>{ const p=prayerNow(); if(!p) return; const {key,fz}=prayFreeze(p); const z=el.dataset.z, id=el.dataset.id; const g=fz[z]||(fz[z]={f:[],s:[],m:{}}); g.m=g.m||{};
+    if(g.f.includes(id)){ g.f=g.f.filter(x=>x!==id); g.s.push(id); delete g.m[id]; } else { g.s=g.s.filter(x=>x!==id); g.f.push(id); for(const k of Object.keys(g.m)) if(g.m[k]===id) delete g.m[k]; }
+    praySave(key,fz); toast('تم التعديل ✅','ok'); },
+  'roll-ignore': el=>{ const l=S.logs[el.dataset.id]; if(l) put('logs', el.dataset.id, {...l, ignored:true}); toast('تم التجاهل، ما تنحسب غياب ✅','ok'); },
   'pay-approve': el=>{ const c=cfg(); put('config','main',{...c, payOk:{...(c.payOk||{}), [el.dataset.id+'_'+el.dataset.k]:now()}}); toast('تم اعتماد اليوم ✅','ok'); },
   'pay-unapprove': el=>{ const c=cfg(); const o={...(c.payOk||{})}; delete o[el.dataset.id+'_'+el.dataset.k]; put('config','main',{...c, payOk:o}); toast('انلغى الاعتماد','ok'); },
   'pay-done': el=>{ const id=el.dataset.id; markPaid(id); toast(`تم: ${S.volunteers[id]?.name}`,'ok'); },
@@ -4034,6 +4054,7 @@ document.addEventListener('change', e=>{
     const list=rows.map(c=>{ const v=findByCode(c[2]); return v?{id:v.id, name:c[0]||v.name, phone:c[1]||v.phone||'', code:c[2], pin:c[3]}:null; }).filter(x=>x&&x.pin);
     if(!list.length) return toast('ما لقيت بيانات في الملف','warn'); credsModal(list); }).catch(()=>toast('تعذر قراءة الملف','warn')); }
   if('profPhoto' in el.dataset && el.files && el.files[0]){ shrinkPhoto(el.files[0]).then(u=>{ const h=$('#ph-data'); if(h) h.value=u; const pv=$('#ph-prev'); if(pv) pv.innerHTML=`<img src="${u}" alt="">`; }).catch(()=>toast('تعذر قراءة الصورة','warn')); }
+  if(el.dataset.prayMate){ const p=prayerNow(); if(p){ const {key,fz}=prayFreeze(p); const z=el.dataset.z; const g=fz[z]||(fz[z]={f:[],s:[],m:{}}); g.m=g.m||{}; if(el.value) g.m[el.dataset.prayMate]=el.value; else delete g.m[el.dataset.prayMate]; praySave(key,fz); toast('تم التعديل ✅','ok'); } }
   if(el.dataset.staffZone){ const e=el.dataset.staffZone; const c=cfg(); const cur={...STAFF_DEFAULT[e], ...((c.staff||{})[e]||{})}; const ids=[...document.querySelectorAll(`input[data-staff-zone="${e}"]:checked`)].map(x=>x.value); put('config','main',{...c, staff:{...(c.staff||{}), [e]:{...cur, zones:ids}}}); toast('تم الحفظ','ok'); }
   if(el.dataset.pray){ const k=el.dataset.pray; const pc=prayCfg(); if(k==='dur') put('config','main',{...cfg(), prayer:{...pc, dur:Math.max(5,Math.min(60,+el.value||20))}}); else put('config','main',{...cfg(), prayer:{...pc, times:{...(pc.times||{}), [k]:el.value}}}); toast('تم الحفظ','ok'); }
   if(el.dataset.mini){ const k=el.dataset.mini; const c=cfg(); put('config','main',{...c, mini:{...miniCfg(), [k]:Math.max(1,+el.value||1)}}); toast('تم الحفظ','ok'); }
