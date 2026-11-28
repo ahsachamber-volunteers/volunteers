@@ -744,6 +744,7 @@ body:has(.wall.nb) #wall-fx .fb{fill:#d9b38c!important}
 .pray-card .pill{background:rgba(255,255,255,.14);color:#fff}
 .pray-t{font-size:1rem}.pray-t.late{color:#fecaca;font-weight:700}
 
+.pray-plan{display:grid;gap:4px;font-size:.95rem}.pray-plan b{font-weight:800}.pray-tbl summary{cursor:pointer;font-weight:700;opacity:.9}.pray-tbl>div{display:grid;gap:4px;margin-top:6px}
 .ping-card{display:grid;gap:10px;padding:16px;border-radius:16px;background:#fde68a;color:#3a1018;border:2px solid #f59e0b;animation:pingp 1.2s ease-in-out infinite}
 .ping-card b{font-size:1.15rem;font-family:var(--font-display)}
 .ping-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
@@ -1613,11 +1614,21 @@ function autoCloseOld(){
     try{ window.NOW_OV=T; setStatus(v.id,'out','auto'); n++; } finally { window.NOW_OV=0; }
   }
   if(n) toast(`🌙 سجّلت المنصة انصراف ${n} متطوع نسوا ينصرفون أمس`,'ok');
+    prayerBroadcast();
   /* يوم جديد: اللي انصرفوا أيام سابقة يرجعون "لم يحضر" (الساعات محفوظة في السجل) */
   let r=0;
   for(const v of allVols()){ if(v.status!=='out') continue; const t=v.outAt||v.statusAt||0; if(t && dayStart(t)>=today) continue;
     const cur=S.volunteers[v.id]; if(!cur) continue; const {breakAt,checkInAt,outAt,activeSince,...rest}=cur; put('volunteers', v.id, {...rest, status:'idle', statusAt:now()}); r++; }
   if(r) toast(`☀️ يوم جديد: ${r} متطوع جاهزين لتسجيل الحضور`,'ok');
+}
+/* قبل الصلاة بنص ساعة: تعميم لكل زون بجدول التناوب */
+function prayerBroadcast(){
+  const p=prayerNow(); if(!p || now()>=p.T) return; const key=dayKey()+'_'+p.k; const c=cfg(); if((c.praySent||{})[key]) return;
+  const plan=prayerPlan(p); const t2=p.T+p.dur; const nm=x=>firstName(S.volunteers[x.id]?.name||x.name);
+  for(const z of allZones()){ const pl=plan[z.id]; if(!pl || (!pl.first.length && !pl.second.length)) continue;
+    put('msgs', uid('m'), {text:`🕌 تناوب صلاة ${p.t} (الأذان ${fmtTime(p.T)}) في ${z.name}: • 🟢 الفوج الأول يطلع مع الأذان ويرجع ${fmtTime(t2)}: ${pl.first.map(nm).join('، ')||'—'} • 🟡 الفوج الثاني يطلع بعد رجوعهم ويرجع ${fmtTime(t2+p.dur)}: ${pl.second.map(nm).join('، ')||'—'} • اضغط "طلعت للصلاة" و"رجعت" من المنصة 🤍`, target:z.id, at:now()}); }
+  const frozen=Object.fromEntries(Object.entries(plan).map(([zid,g])=>[zid,{f:g.first.map(x=>x.id), s:g.second.map(x=>x.id)}]));
+  put('config','main',{...c, praySent:{...Object.fromEntries(Object.entries(c.praySent||{}).slice(-6)), [key]:now()}, prayPlan:{...Object.fromEntries(Object.entries(c.prayPlan||{}).slice(-4)), [key]:frozen}});
 }
 async function ensureLeaders(){
   if(!leadOn() || LEAD_BUSY || !isFull() || now()-LEAD_AT<20000) return;
@@ -1763,8 +1774,17 @@ function prayerTime(k, t=now()){
   return k==='maghrib'? mg : mg+90*60000;
 }
 function prayerNow(){ const pc=prayCfg(); if(!pc.enabled) return null; const dur=(pc.dur||20)*60000;
-  for(const p of PRAYERS){ const T=prayerTime(p.k); if(now()>=T-10*60000 && now()<=T+2*dur+20*60000) return {...p, T, dur, end:T+2*dur+20*60000}; } return null; }
+  for(const p of PRAYERS){ const T=prayerTime(p.k); if(now()>=T-30*60000 && now()<=T+2*dur+20*60000) return {...p, T, dur, end:T+2*dur+20*60000}; } return null; }
 function prayerPlan(p){
+  /* لو الجدول انثبت (قبل الصلاة بنص ساعة) نستخدمه عشان ما يتغير على المتطوعين */
+  const fz=(cfg().prayPlan||{})[dayKey()+'_'+p.k];
+  if(fz){ const out={}; const seen=new Set(); const V=id=>{ const v=S.volunteers[id]; return v?{...v,id}:null; };
+    for(const [zid,g] of Object.entries(fz)){ const f=(g.f||[]).map(V).filter(x=>x && x.zone===zid), sc=(g.s||[]).map(V).filter(x=>x && x.zone===zid); f.concat(sc).forEach(x=>seen.add(x.id)); out[zid]={first:f, second:sc}; }
+    for(const z of allZones()){ if(attendOnly(z)) continue; const extra=allVols().filter(v=>v.zone===z.id && !seen.has(v.id) && (v.status==='active'||v.status==='break')); if(extra.length){ out[z.id]=out[z.id]||{first:[],second:[]}; out[z.id].second=out[z.id].second.concat(extra); } }
+    return out; }
+  return prayerPlanLive(p);
+}
+function prayerPlanLive(p){
   const L=cfg().leaders||{}; const leaders=new Set(L.day===dayKey()?Object.values(L.byZone||{}):[]);
   const out={};
   for(const z of allZones()){ if(attendOnly(z)) continue;
@@ -1787,12 +1807,16 @@ function prayerPortal(vid){
   const p=prayerNow(); if(!p) return ''; const v=S.volunteers[vid]; if(!v || zAttendOnly(v.zone) || !(v.status==='active'||v.status==='break')) return '';
   const r=myPrayerRole(vid,p); if(!r) return ''; const s=prayState(v,p); const c=canPray(vid,p);
   const mateName=r.mate?firstName(S.volunteers[r.mate.id]?.name||r.mate.name):'';
+  const t1=p.T, t2=p.T+p.dur; const before=now()<p.T-2*60000;
   let body='';
   if(s && !s.back){ const left=s.out+p.dur-now(); body=`<div class="pray-t ${left<0?'late':''}">${left>=0?`ترجع خلال <b class="num" data-countdown="${s.out+p.dur}">${fmtClock(left)}</b>`:`⚠️ تأخرت <b class="num">${fmtDur(-left)}</b>، ارجع لزونك`}</div><button class="btn ok lg" data-act="pray-back">✅ رجعت</button>`; }
   else if(s && s.back){ body=`<div class="small" style="color:var(--ok)">✅ رجعت ${fmtTime(s.back)}، تقبّل الله${s.back-s.out<=p.dur?' · +5 نقاط انضباط':''}</div>`; }
   else if(c.ok){ body=`<button class="btn primary lg" data-act="pray-go">🕌 طلعت للصلاة</button>${mateName?`<p class="tiny" style="margin:0;opacity:.85">${r.g===1?`${esc(mateName)} يغطي مكانك`:`رجع ${esc(mateName)}، دورك الحين`}</p>`:''}`; }
-  else { body=`<div class="small">${r.g===1?`دورك يبدأ مع الأذان ${fmtTime(p.T)}`:`أنت تغطي مكان <b>${esc(mateName)}</b>، وتطلع أنت بعد ما يرجع`}</div>`; }
-  return `<section class="pray-card"><div class="row" style="justify-content:space-between"><b>🕌 صلاة ${p.t} · ${fmtTime(p.T)}</b><span class="pill nodot">${r.g===1?'الفوج الأول':'الفوج الثاني'}</span></div>${body}<p class="tiny" style="margin:0;opacity:.75">المدة ${prayCfg().dur} دقيقة · ما تنخصم من رصيد الاستراحة</p></section>`;
+  else if(r.g===1){ body=`<div class="pray-plan"><b>أنت في الفوج الأول 🟢</b><span>تطلع مع الأذان <b class="num">${fmtTime(t1)}</b> وترجع قبل <b class="num">${fmtTime(t2)}</b></span>${mateName?`<span>${esc(mateName)} يغطي مكانك لين ترجع</span>`:''}<span class="tiny">يطلع لك زر "طلعت للصلاة" وقت الأذان</span></div>`; }
+  else { body=`<div class="pray-plan"><b>أنت في الفوج الثاني 🟡</b><span>تبقى في زونك وتغطي مكان <b>${esc(mateName||'زميلك')}</b></span><span>تطلع بعد ما يرجع، تقريباً <b class="num">${fmtTime(t2)}</b>، وترجع قبل <b class="num">${fmtTime(t2+p.dur)}</b></span><span class="tiny">يطلع لك زر "طلعت للصلاة" أول ما يرجع</span></div>`; }
+  const pl=prayerPlan(p)[v.zone]; const nm=x=>esc(firstName(S.volunteers[x.id]?.name||x.name));
+  const table=pl?`<details class="pray-tbl" ${before?'open':''}><summary class="small">جدول التناوب في زونك</summary><div class="small"><div>🟢 <b>الفوج الأول</b> (${fmtTime(t1)}–${fmtTime(t2)}): ${pl.first.map(nm).join('، ')||'—'}</div><div>🟡 <b>الفوج الثاني</b> (${fmtTime(t2)}–${fmtTime(t2+p.dur)}): ${pl.second.map(nm).join('، ')||'—'}</div></div></details>`:'';
+  return `<section class="pray-card"><div class="row" style="justify-content:space-between"><b>🕌 صلاة ${p.t} · ${fmtTime(p.T)}</b><span class="pill nodot">${r.g===1?'الفوج الأول':'الفوج الثاني'}</span></div>${before?`<div class="tiny" style="opacity:.85">باقي على الأذان <b class="num" data-countdown="${p.T}">${fmtClock(p.T-now())}</b></div>`:''}${body}${table}<p class="tiny" style="margin:0;opacity:.75">المدة ${prayCfg().dur} دقيقة · ما تنخصم من رصيد الاستراحة</p></section>`;
 }
 function prayerCard(){
   const p=prayerNow(); if(!p) return ''; const plan=prayerPlan(p); const zs=zones().filter(z=>plan[z.id]);
