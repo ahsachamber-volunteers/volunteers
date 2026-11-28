@@ -1057,7 +1057,7 @@ function gamiCalc(vid){
   const acts=[]; const seenDay=new Set();
   for(const l of ins){ const d=dayStart(l.at); if(seenDay.has(d)) continue; seenDay.add(d); let good=true; if(v.shiftStart){ const [h,m]=String(v.shiftStart).split(':').map(Number); const t=new Date(d); t.setHours(h||0,m||0,0,0); good = l.at <= t.getTime()+5*60000; } acts.push({at:l.at, good}); }
   let ontime=0, late=0, cum={}, st=null; const ontimeAts=[];
-  for(const l of L){ if(l.type==='break_start') st=l.at; else if((l.type==='break_end'||l.type==='out') && st!=null){ const d=dayStart(st); cum[d]=(cum[d]||0)+(l.at-st); const ok=cum[d]<=dayAllow(vid,d); if(ok){ ontime++; ontimeAts.push(l.at); } else late++; acts.push({at:l.at, good:ok}); st=null; } }
+  for(const l of L){ if(l.type==='break_start') st=l.at; else if((l.type==='break_end'||l.type==='out') && st!=null){ const d=dayStart(st); cum[d]=(cum[d]||0)+(l.at-st); const au=l.auto||l.by==='auto'; const ok=cum[d]<=dayAllow(vid,d) && !au; if(ok){ ontime++; ontimeAts.push(l.at); } else if(!au) late++; if(!au) acts.push({at:l.at, good:ok}); st=null; } }
   add('ontime','العودة من الاستراحة في الوقت', ontime*PTS.ontime);
   acts.sort((a,b)=>a.at-b.at); let streak=0, maxStreak=0, sb=0; const milestones=[];
   for(const a of acts){ if(a.good){ streak++; maxStreak=Math.max(maxStreak,streak); if(streak>=3) sb += streak>=6?5:3; if([3,6,10,15,20].includes(streak)) milestones.push({n:streak, at:a.at}); } else streak=0; }
@@ -1615,6 +1615,10 @@ function autoCloseOld(){
   }
   if(n) toast(`🌙 سجّلت المنصة انصراف ${n} متطوع نسوا ينصرفون أمس`,'ok');
     prayerBroadcast();
+  /* رجوع تلقائي: اللي خلص رصيد استراحته ونسى يضغط "رجعت" بعد 5 دقائق، ترجعه المنصة (بدون نقاط الالتزام) */
+  for(const v of allVols()){ if(v.status!=='break' || !v.breakAt) continue; const left=breakLeft(v.id); if(left>-5*60000) continue;
+    const T=Date.now()+left; try{ window.NOW_OV=Math.max(T, v.breakAt+60000); setStatus(v.id,'active','auto',{}); } finally { window.NOW_OV=0; }
+    toast(`☕ ${firstName(v.name)} خلصت استراحته ونسى يضغط "رجعت"، رجّعته المنصة تلقائياً`,'warn'); }
   /* يوم جديد: اللي انصرفوا أيام سابقة يرجعون "لم يحضر" (الساعات محفوظة في السجل) */
   let r=0;
   for(const v of allVols()){ if(v.status!=='out') continue; const t=v.outAt||v.statusAt||0; if(t && dayStart(t)>=today) continue;
@@ -1666,17 +1670,18 @@ function leaderBanner(vid){ const L=cfg().leaders||{}; if(L.day!==dayKey()) retu
 const STAFF_DEFAULT = {
   'shahadu057@gmail.com':{name:'شهد', role:'attend'},
   'f6omah.11@gmail.com':{name:'فاطمة', role:'hosp'},
-  'latifa.abdullah.32@gmail.com':{name:'لطيفة', role:'zones', zoneNames:['البني','الأخضر','الأصفر']},
-  'saraalshuaibi99@hotmail.com':{name:'سارة', role:'zones', zoneNames:['البرتقالي','الأحمر','البنفسجي','الإعلام']},
+  'latifa.abdullah.32@gmail.com':{name:'لطيفة', role:'zones', zoneNames:['البني','الأخضر','الأحمر']},
+  'saraalshuaibi99@hotmail.com':{name:'سارة', role:'zones', zoneNames:['البرتقالي','البنفسجي','الإعلام','الأزرق']},
 };
 const DALAL = {email:'daq.007@hotmail.com', phone:'0503922228', name:'دلال'};
 const ROLE_T = {full:'لوحة المشرف', attend:'مشرفة الحضور', hosp:'مشرفة الضيافة', zones:'مشرفة الزونات'};
 function myStaff(){ const t=lsGet('roleTest'); if(t && S.mode!=='db') return t; const e=String(AUTH.user?.email||'').toLowerCase(); if(!e) return null; const c=(cfg().staff||{})[e] || STAFF_DEFAULT[e]; return c?{...c,email:e}:null; }
 const ROLE = () => getSes()?.role==='admin' ? (myStaff()?.role||'full') : null;
 const isFull = () => ROLE()==='full';
+const normAr = x => String(x||'').replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي').trim();
 function myZoneSet(){
   if(ROLE()!=='zones') return null; const st=myStaff(); const all=cfg().zones||[];
-  const ids = st.zones?.length ? st.zones : all.filter(z=>(st.zoneNames||[]).some(n=>String(z.name||'').includes(n))).map(z=>z.id);
+  const ids = st.zones?.length ? st.zones : all.filter(z=>(st.zoneNames||[]).some(n=>normAr(z.name).includes(normAr(n)))).map(z=>z.id);
   return new Set(ids);
 }
 /* مجموعات التبديل: a = الاستقبال والتذاكر، b = بقية الزونات، lock = ثابت (حضور فقط) */
@@ -1911,6 +1916,11 @@ function miniCard(){
     ${skipped.length?`<div class="tiny muted">متخطاة هالمرة: ${skipped.map(z=>esc(z.name)).join('، ')}</div>`:''}
     <div class="row">${picks.length?`<button class="btn primary" data-act="mini-send">☕ أرسلهم (${picks.reduce((t,p)=>t+p.vs.length,0)})</button>`:''}<button class="btn" data-act="mini-skip">تخطي هالجولة</button></div>
   </div></section>`;
+}
+function breakEndAlert(v){
+  if(!v || v.status!=='break') return ''; const left=breakLeft(v.id); if(left>2*60000) return '';
+  const key=v.breakAt+'_'+(left<0?'o':'s'); if(FX.brk!==key){ FX.brk=key; setTimeout(()=>{ try{ navigator.vibrate&&navigator.vibrate([400,150,400,150,400]); }catch{} try{ say(left<0?'خلصت استراحتك، ارجع لزونك':'باقي دقيقتين على نهاية استراحتك'); }catch{} },200); }
+  return `<section class="ping-card" role="alertdialog"><b>${left<0?'⏰ خلصت استراحتك!':'⏰ استراحتك قربت تخلص'}</b><span class="small">${left<0?`تأخرت <b class="num">${fmtDur(-left)}</b>. إذا رجعت لزونك اضغط الزر عشان ما تنحسب عليك مخالفة.`:`باقي <b class="num" data-countdown="${now()+left}">${fmtClock(left)}</b>. لا تنسى تضغط "رجعت" أول ما توصل زونك.`}</span><button class="btn ok lg" data-act="v-do" data-s="active">✅ رجعت لزوني</button></section>`;
 }
 function miniBanner(v){
   if(!onMini(v)) return '';
@@ -2227,8 +2237,14 @@ function payStatus(vid, k=dayKey()){
   const a=dayFromKey(k); const attended=(idx().byV[vid]||[]).some(l=>l.type==='in' && l.at>=a && l.at<a+86400000);
   if(!attended) return {st:'absent', amt};
   const need=(c.minHours??6)*3600000; const w=workedOnDay(vid,k);
+  if((cfg().payOk||{})[vid+'_'+k]) return {st:'due', amt, w, manual:true};
   if(w<need) return {st:'wait', left:need-w, amt, w};
   return {st:'due', amt, w};
+}
+function payAdminBlock(vid){
+  if(!payCfg().enabled) return ''; const b=payBal(vid); if(!b.days.length) return ''; const need=payCfg().minHours??6;
+  return `<section class="card"><div class="card-h"><h3>💰 أيام البدل</h3><span class="tiny muted num">${b.okDays} يوم · ${b.bal} ريال</span></div><div class="list">${b.days.map(d=>{ const ok=d.ps.st==='due', man=d.ps.manual, today=d.k===dayKey(); const h=((d.ps.w||0)/3600000).toFixed(1);
+    return `<div class="li" style="padding:8px 12px"><b class="num" style="width:44px">${fmtKey(d.k)}</b><div class="grow small">${ok?(man?'✅ معتمد يدوياً':'✅ مستحق'):today?'⏳ اليوم':'✗ ما كمّل'} <span class="muted num">· ${h} ساعة من ${need}</span></div>${!today&&!ok?`<button class="btn sm ok" data-act="pay-approve" data-k="${d.k}" data-id="${vid}">اعتماد اليوم</button>`:''}${man?`<button class="btn sm ghost" data-act="pay-unapprove" data-k="${d.k}" data-id="${vid}">إلغاء</button>`:''}</div>`; }).join('')}</div></section>`;
 }
 function payInfoOf(vid){ return S.payinfo[vid]; }
 function allowanceDays(){ const set=new Set(); Object.values(S.logs).forEach(l=>{ if(l.type==='in') set.add(dayKey(l.at)); }); set.add(dayKey()); return [...set].sort(); }
@@ -2797,6 +2813,7 @@ function renderDrawer(full){
     </div>
     ${(()=>{ const sf=S.selfies?.[vid+'_'+dayKey()]; return sf?`<div class="sf-drawer"><span class="tiny muted">سيلفي حضور اليوم ${fmtTime(sf.at)}</span>${sf.img?`<img src="${esc(sf.img)}" alt="سيلفي الحضور">`:'<b style="color:var(--warn)">⚠️ سجّل بدون سيلفي</b>'}</div>`:''; })()}
     ${violBlock(vid)}
+    ${ROLE()==='full'?payAdminBlock(vid):''}
     ${ROLE()==='full'||ROLE()==='zones'?healthBlock(vid):''}
     ${(()=>{ const g=gami(vid); return `<div class="card card-b stack" style="gap:10px">
       <div class="row" style="justify-content:space-between"><div class="row"><b class="num" style="font-family:var(--font-display);font-size:1.5rem">${g.p}</b><span class="muted small">نقطة</span>${levelPill(g.level)}${flameHtml(g.streak)}</div>${isFull()||ROLE()==='zones'?`<button class="btn sm primary" data-act="award" data-id="${vid}">${ic('gift')} منح مكافأة</button>`:''}</div>
@@ -3012,7 +3029,7 @@ function settingsView(){
   </div></section>
   <section class="card"><div class="card-h"><h2>👩‍💼 المشرفات</h2></div><div class="card-b stack" style="gap:10px">
     <p class="small muted" style="margin:0">كل مشرفة تدخل بإيميلها من "دخول المشرف"، وتشوف شغلها بس.</p>
-    ${Object.entries({...STAFF_DEFAULT, ...(cfg().staff||{})}).map(([e,st])=>{ const zs=st.role==='zones'?(st.zones?.length?st.zones:allZones().filter(z=>(st.zoneNames||[]).some(n=>String(z.name||'').includes(n))).map(z=>z.id)):[]; return `<div class="staff-row"><div><b>${esc(st.name||'')}</b> <span class="pill nodot tiny">${ROLE_T[st.role]||''}</span><div class="tiny muted" dir="ltr">${esc(e)}</div></div>${st.role==='zones'?`<div class="chk-grid">${allZones().map(z=>`<label class="row small"><input type="checkbox" data-staff-zone="${esc(e)}" value="${esc(z.id)}" ${zs.includes(z.id)?'checked':''}> ${esc(z.name)}</label>`).join('')}</div>`:''}</div>`; }).join('')}
+    ${Object.entries({...STAFF_DEFAULT, ...(cfg().staff||{})}).map(([e,st])=>{ const zs=st.role==='zones'?(st.zones?.length?st.zones:allZones().filter(z=>(st.zoneNames||[]).some(n=>normAr(z.name).includes(normAr(n)))).map(z=>z.id)):[]; return `<div class="staff-row"><div><b>${esc(st.name||'')}</b> <span class="pill nodot tiny">${ROLE_T[st.role]||''}</span><div class="tiny muted" dir="ltr">${esc(e)}</div></div>${st.role==='zones'?`<div class="chk-grid">${allZones().map(z=>`<label class="row small"><input type="checkbox" data-staff-zone="${esc(e)}" value="${esc(z.id)}" ${zs.includes(z.id)?'checked':''}> ${esc(z.name)}</label>`).join('')}</div>`:''}</div>`; }).join('')}
   </div></section>
   <section class="card"><div class="card-h"><h2>⚠️ المتابعة والمخالفات</h2></div><div class="card-b grid2">
     <div class="field"><label>تفقّد القائد لفريقه كل (دقيقة)</label><input class="input num" type="number" min="15" max="240" data-cfg="rollEvery" data-num value="${cfg().rollEvery||60}"></div>
@@ -3135,6 +3152,7 @@ function portalView(vid){
     ${leaderBanner(vid)}
     ${pingBanner(v)}
     ${miniBanner(v)}
+    ${breakEndAlert(v)}
     ${prayerPortal(vid)}
     ${rollPortal(vid)}
     ${tickerHtml()}
@@ -3792,6 +3810,8 @@ const ACT = {
   'mini-send': async ()=>{ const m=miniCfg(); const picks=miniPicks(); const t=now(); let n=0;
     for(const p of picks) for(const v of p.vs){ const cur=S.volunteers[v.id]; if(!cur) continue; put('volunteers', v.id, {...cur, mini:{at:t, until:t+(m.min+10)*60000, pend:true, min:m.min}}); addLog(v.id,'mini',{by:'admin', min:m.min}); n++; if(DB) await sleep(30); }
     UI.miniSkip=[]; { const c=cfg(); put('config','main',{...c, miniRounds:{...(c.miniRounds||{}), ...Object.fromEntries(zones().map(z=>[z.id,t]))}}); } toast(`أُرسل ${n} للاستراحة القصيرة ☕`,'ok'); },
+  'pay-approve': el=>{ const c=cfg(); put('config','main',{...c, payOk:{...(c.payOk||{}), [el.dataset.id+'_'+el.dataset.k]:now()}}); toast('تم اعتماد اليوم ✅','ok'); },
+  'pay-unapprove': el=>{ const c=cfg(); const o={...(c.payOk||{})}; delete o[el.dataset.id+'_'+el.dataset.k]; put('config','main',{...c, payOk:o}); toast('انلغى الاعتماد','ok'); },
   'pay-done': el=>{ const id=el.dataset.id; markPaid(id); toast(`تم: ${S.volunteers[id]?.name}`,'ok'); },
   'pay-undo': el=>{ const id=el.dataset.id; const last=Object.entries(S.payouts).filter(([,p])=>p.v===id).sort((a,b)=>b[1].at-a[1].at)[0]; if(last) del('payouts', last[0]); },
   'pay-all': async el=>{ const due=balRows().filter(r=>r.b.bal>0 && r.pi); if(!await askConfirm('تعليم الكل',`تأكيد إن ${due.length} تحويل تمت؟ استخدمها بعد ما تنفذين التحويل الجماعي من البنك.`,'تأكيد')) return; for(const r of due){ markPaid(r.v.id,'bulk'); if(DB) await sleep(40); } toast(`تم تعليم ${due.length} تحويل`,'ok'); },
